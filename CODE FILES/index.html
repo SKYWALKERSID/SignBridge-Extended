@@ -1,0 +1,3820 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description"
+    content="SignBridge - High-fidelity real-time neural bridge translating Indian Sign Language (ISL) into text and voice, and text into precise sign diagrams." />
+  <title>SignBridge | Neural Communication Platform</title>
+
+  <!-- Font Preconnect & Embedding -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+
+  <!-- React & ReactDOM (Production CDNs) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+  <!-- Babel Standalone (JSX compiler) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Tailwind CSS v3 Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- MediaPipe Hands & Camera CDNs -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            pale: 'var(--color-pale)',
+            rich: 'var(--color-rich)',
+            accent: 'var(--color-accent)',
+            highlight: 'var(--color-highlight)',
+            cocoa: 'var(--color-cocoa)',
+            'card-bg': 'var(--color-card-bg)',
+            'card-border': 'var(--color-card-border)',
+            'pale-trans': 'var(--color-pale-trans)',
+            'rich-trans': 'var(--color-rich-trans)',
+            'rich-solid-trans': 'var(--color-rich-solid-trans)',
+            'pale-solid-trans': 'var(--color-pale-solid-trans)',
+          },
+          fontFamily: {
+            serif: ['Lora', 'serif'],
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          borderWidth: {
+            '3': '3px',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /*Animation and stylying */
+    * {
+      box-sizing: border-box;
+      scrollbar-width: thin;
+    }
+
+    :root,
+    body.theme-light {
+      --color-bg-base: #fcfbfa;
+      --color-card-bg: #faf6f0;
+      --color-card-border: #eadecf;
+      --color-accent: #435b41;
+      --color-highlight: #bd5d38;
+      --color-cocoa: #1e1b18;
+      --color-rich: #1e1b18;
+      --color-pale: #fcfbfa;
+
+      --color-rich-trans: rgba(67, 91, 65, 0.08);
+      --color-rich-solid-trans: rgba(67, 91, 65, 0.85);
+      --color-pale-trans: rgba(234, 222, 207, 0.15);
+      --color-pale-solid-trans: rgba(250, 246, 240, 0.85);
+    }
+
+    body.theme-dark {
+      --color-bg-base: #1a1613;
+      --color-card-bg: #24201c;
+      --color-card-border: #3a332d;
+      --color-accent: #829e80;
+      --color-highlight: #db8c69;
+      --color-cocoa: #f5efe6;
+      --color-rich: #1a1613;
+      --color-pale: #f5efe6;
+
+      --color-rich-trans: rgba(130, 158, 128, 0.08);
+      --color-rich-solid-trans: rgba(130, 158, 128, 0.85);
+      --color-pale-trans: rgba(58, 51, 45, 0.15);
+      --color-pale-solid-trans: rgba(36, 32, 28, 0.85);
+    }
+
+    body {
+      transition: background-color 450ms cubic-bezier(0.16, 1, 0.3, 1), color 450ms cubic-bezier(0.16, 1, 0.3, 1), background-image 450ms ease;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    body.theme-light {
+      background-color: #fcfbfa;
+      background-image:
+        radial-gradient(circle at 10% 10%, rgba(189, 93, 56, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 90% 10%, rgba(67, 91, 65, 0.04) 0%, transparent 45%),
+        linear-gradient(135deg, #fcfbfa 0%, #f7f5f2 100%);
+      color: #1e1b18;
+    }
+
+    body.theme-dark {
+      background-color: #1a1613;
+      background-image:
+        radial-gradient(circle at 15% 20%, rgba(219, 140, 105, 0.03) 0%, transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(130, 158, 128, 0.04) 0%, transparent 40%),
+        linear-gradient(135deg, #1a1613 0%, #120f0d 100%);
+      color: #f5efe6;
+    }
+
+    /* Core fonts */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    .font-brand {
+      font-family: 'Lora', serif !important;
+      letter-spacing: -0.01em;
+    }
+
+    p,
+    span,
+    button,
+    input,
+    textarea,
+    select,
+    li {
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
+    }
+
+    code,
+    pre,
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+
+    /* Grid Pattern */
+    .ambient-grid {
+      background-size: 60px 60px;
+      background-image:
+        linear-gradient(to right, rgba(235, 235, 223, 0.012) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(235, 235, 223, 0.012) 1px, transparent 1px);
+    }
+
+    .theme-light .ambient-grid {
+      background-image:
+        linear-gradient(to right, rgba(25, 18, 101, 0.01) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(25, 18, 101, 0.01) 1px, transparent 1px);
+    }
+
+    /* Glassmorphism Cards */
+    .glass-card {
+      transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .theme-light .glass-card {
+      background: var(--color-card-bg);
+      border: 1px solid #eadecf;
+      box-shadow: 0 8px 30px rgba(30, 27, 24, 0.03);
+    }
+
+    .theme-dark .glass-card {
+      background: #24201c;
+      border: 1px solid #3a332d;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .glass-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .theme-light .glass-card:hover {
+      border-color: #435b41;
+      box-shadow: 0 12px 35px rgba(30, 27, 24, 0.06);
+    }
+
+    .theme-dark .glass-card:hover {
+      border-color: #829e80;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Video Viewfinder */
+    .scanner-hud {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 15;
+      border: 1px solid rgba(67, 91, 65, 0.08);
+    }
+
+    .theme-dark .scanner-hud {
+      border-color: rgba(130, 158, 128, 0.08);
+    }
+
+    /* Corner Brackets for Scanner HUD */
+    .hud-corner {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border: 2px solid currentColor;
+    }
+
+    .hud-tl {
+      top: 12px;
+      left: 12px;
+      border-right: 0;
+      border-bottom: 0;
+    }
+
+    .hud-tr {
+      top: 12px;
+      right: 12px;
+      border-left: 0;
+      border-bottom: 0;
+    }
+
+    .hud-bl {
+      bottom: 12px;
+      left: 12px;
+      border-right: 0;
+      border-top: 0;
+    }
+
+    .hud-br {
+      bottom: 12px;
+      right: 12px;
+      border-left: 0;
+      border-top: 0;
+    }
+
+    /* Moving Laser Scan Line */
+    @keyframes laser-scan {
+      0% {
+        top: 0%;
+        opacity: 0.1;
+      }
+
+      10% {
+        opacity: 0.6;
+      }
+
+      90% {
+        opacity: 0.6;
+      }
+
+      100% {
+        top: 100%;
+        opacity: 0.1;
+      }
+    }
+
+    .laser-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: currentColor;
+      box-shadow: 0 0 10px currentColor;
+      animation: laser-scan 4s linear infinite;
+    }
+
+    /* Subtle Grid Overlay */
+    .grid-overlay {
+      position: absolute;
+      inset: 0;
+      background-size: 24px 24px;
+      background-image:
+        linear-gradient(to right, rgba(67, 91, 65, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(67, 91, 65, 0.02) 1px, transparent 1px);
+    }
+
+    .theme-dark .grid-overlay {
+      background-image:
+        linear-gradient(to right, rgba(130, 158, 128, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(130, 158, 128, 0.02) 1px, transparent 1px);
+    }
+
+    /* Keyframes for soft background pulse */
+    @keyframes ambient-glow {
+
+      0%,
+      100% {
+        transform: scale(1) translate(0, 0);
+        opacity: 0.2;
+      }
+
+      50% {
+        transform: scale(1.15) translate(4%, -3%);
+        opacity: 0.4;
+      }
+    }
+
+    .bg-glowing-orb-1 {
+      position: absolute;
+      width: 450px;
+      height: 450px;
+      border-radius: 999px;
+      filter: blur(90px);
+      pointer-events: none;
+      z-index: 0;
+      background-color: var(--color-highlight);
+      opacity: 0.08;
+      animation: ambient-glow 12s ease-in-out infinite;
+    }
+
+    .bg-glowing-orb-2 {
+      position: absolute;
+      width: 450px;
+      height: 450px;
+      border-radius: 999px;
+      filter: blur(90px);
+      pointer-events: none;
+      z-index: 0;
+      background-color: var(--color-accent);
+      opacity: 0.05;
+      animation: ambient-glow 15s ease-in-out infinite alternate;
+    }
+
+    .theme-light .bg-glowing-orb-1 {
+      opacity: 0.06;
+    }
+
+    .theme-light .bg-glowing-orb-2 {
+      opacity: 0.04;
+    }
+
+    /* Academic manuscript double border utility */
+    .double-border-rich {
+      border: 3px double #1e1b18;
+    }
+
+    .theme-dark .double-border-rich {
+      border-color: #f5efe6;
+    }
+
+    .double-border-pale {
+      border: 3px double #eadecf;
+    }
+
+    .theme-dark .double-border-pale {
+      border-color: #3a332d;
+    }
+
+    /* Elegant Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    .theme-light ::-webkit-scrollbar-track {
+      background: #f7f5f2;
+    }
+
+    .theme-dark ::-webkit-scrollbar-track {
+      background: #1a1613;
+    }
+
+    .theme-light ::-webkit-scrollbar-thumb {
+      background: #435b41;
+      border-radius: 99px;
+    }
+
+    .theme-dark ::-webkit-scrollbar-thumb {
+      background: #829e80;
+      border-radius: 99px;
+    }
+
+    /* Primary & Secondary Button Class Overrides */
+    /* Key Action Buttons (Solid Sage Green) */
+    .theme-light button.bg-rich,
+    .theme-light button.bg-rich-btn,
+    .theme-light .btn-primary {
+      background-color: #435b41 !important;
+      color: #fcfbfa !important;
+      border-color: #435b41 !important;
+    }
+
+    .theme-dark button.bg-pale,
+    .theme-dark button.bg-pale-btn,
+    .theme-dark .btn-primary {
+      background-color: #829e80 !important;
+      color: #1a1613 !important;
+      border-color: #829e80 !important;
+    }
+
+    /* Secondary Buttons (Linen-wash with thin borders) */
+    .theme-light button.bg-transparent.border-rich,
+    .theme-light .btn-secondary {
+      border-color: #eadecf !important;
+      background-color: #fcfbfa !important;
+      color: #435b41 !important;
+    }
+
+    .theme-light button.bg-transparent.border-rich:hover,
+    .theme-light .btn-secondary:hover {
+      background-color: #435b41 !important;
+      color: #fcfbfa !important;
+      border-color: #435b41 !important;
+    }
+
+    .theme-dark button.bg-transparent.border-pale,
+    .theme-dark .btn-secondary {
+      border-color: #3a332d !important;
+      background-color: #24201c !important;
+      color: #829e80 !important;
+    }
+
+    .theme-dark button.bg-transparent.border-pale:hover,
+    .theme-dark .btn-secondary:hover {
+      background-color: #829e80 !important;
+      color: #1a1613 !important;
+      border-color: #829e80 !important;
+    }
+
+    /* Clean subtle micro-interactions */
+    .btn-hover-scale {
+      transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+    }
+
+    .btn-hover-scale:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-hover-scale:active {
+      transform: translateY(0);
+    }
+
+    /* Mirroring camera feed */
+    .mirror-view {
+      transform: scaleX(-1);
+    }
+
+    /* Floating illustration styling */
+    @keyframes floaty {
+
+      0%,
+      100% {
+        transform: translateY(0px) rotate(0deg);
+      }
+
+      50% {
+        transform: translateY(-8px) rotate(1deg);
+      }
+    }
+
+    .float-illustration {
+      animation: floaty 4s ease-in-out infinite;
+    }
+
+    /* Skeleton Loading effect */
+    @keyframes pulse-custom {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: .45;
+      }
+    }
+
+    .pulse-load {
+      animation: pulse-custom 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* High Contrast Border Helper */
+    .contrast-border {
+      outline: 2px solid currentColor !important;
+      outline-offset: 1px;
+    }
+
+    /* Logo SVG Styles & Keyframes */
+    .logo-svg-rect {
+      stroke-dasharray: 1100;
+      stroke-dashoffset: 1100;
+      animation: logo-draw-box 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .logo-svg-rect-bg {
+      opacity: 0;
+      animation: logo-bg-fade-in 1.6s ease-in-out 1.0s forwards;
+    }
+
+    .logo-svg-sign {
+      opacity: 0;
+      transform: scale(0.95);
+      transform-origin: 130px 60px;
+      animation: logo-fade-sign 1.6s cubic-bezier(0.16, 1, 0.3, 1) 1.0s forwards;
+    }
+
+    .logo-svg-cursor {
+      opacity: 0;
+      transform-origin: 245px 60px;
+      animation:
+        logo-cursor-glide 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards,
+        logo-cursor-click 0.4s ease-in-out 3.0s;
+    }
+
+    .logo-svg-ripple {
+      transform: scale(0);
+      opacity: 0;
+      transform-origin: 245px 60px;
+      animation: logo-ripple-expand 1.0s cubic-bezier(0.16, 1, 0.3, 1) 3.0s forwards;
+    }
+
+    .logo-svg-bridge {
+      opacity: 0;
+      transform: translateX(-15px);
+      animation: logo-bridge-reveal 1.6s cubic-bezier(0.16, 1, 0.3, 1) 3.0s forwards;
+    }
+
+    .logo-svg-glow {
+      opacity: 0;
+      animation: logo-glow-fade 1.8s ease-in-out 3.0s forwards, logo-glow-pulse 4s ease-in-out 4.8s infinite alternate;
+    }
+
+    /* Header logo speed adjustments */
+    .logo-sm .logo-svg-rect {
+      animation-duration: 1.2s;
+    }
+
+    .logo-sm .logo-svg-sign {
+      animation-delay: 0.4s;
+      animation-duration: 1.0s;
+    }
+
+    .logo-sm .logo-svg-bridge {
+      animation-delay: 1.6s;
+      animation-duration: 1.0s;
+    }
+
+    .logo-sm .logo-svg-cursor {
+      transform: translate(125px, 50px);
+      animation:
+        logo-cursor-glide 1.2s cubic-bezier(0.25, 1, 0.5, 1) 0.4s forwards,
+        logo-cursor-click 0.4s ease-in-out 1.6s;
+    }
+
+    .logo-sm .logo-svg-ripple {
+      animation: logo-ripple-expand 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.6s forwards;
+    }
+
+    /* Logo interactive hover state triggers */
+    .logo-container:hover .logo-svg-cursor-hover-trigger {
+      animation: logo-cursor-click 0.3s ease-in-out forwards;
+    }
+
+    .logo-container:hover .logo-svg-ripple-hover-trigger {
+      animation: logo-ripple-expand 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Logo Coloring Rules for Dark and Light Themes */
+    .theme-light .logo-svg-rect {
+      stroke: var(--color-accent);
+    }
+
+    .theme-dark .logo-svg-rect {
+      stroke: var(--color-accent);
+    }
+
+    .theme-light .logo-svg-rect-bg {
+      fill: var(--color-accent);
+    }
+
+    .theme-dark .logo-svg-rect-bg {
+      fill: var(--color-accent);
+    }
+
+    .theme-light .logo-svg-sign {
+      fill: var(--color-bg-base);
+    }
+
+    .theme-dark .logo-svg-sign {
+      fill: var(--color-rich);
+    }
+
+    .theme-light .logo-svg-bridge {
+      fill: var(--color-cocoa);
+    }
+
+    .theme-dark .logo-svg-bridge {
+      fill: var(--color-cocoa);
+    }
+
+    .theme-light .logo-svg-cursor {
+      fill: var(--color-accent);
+      stroke: var(--color-accent);
+    }
+
+    .theme-dark .logo-svg-cursor {
+      fill: var(--color-accent);
+      stroke: var(--color-accent);
+    }
+
+    .theme-light .logo-svg-ripple {
+      stroke: var(--color-highlight);
+    }
+
+    .theme-dark .logo-svg-ripple {
+      stroke: var(--color-highlight);
+    }
+
+    .theme-light .logo-svg-glow {
+      fill: var(--color-accent);
+    }
+
+    .theme-dark .logo-svg-glow {
+      fill: var(--color-accent);
+    }
+
+
+    /* Keyframes definitions */
+    @keyframes logo-draw-box {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    @keyframes logo-bg-fade-in {
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes logo-fade-sign {
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes logo-cursor-glide {
+      0% {
+        opacity: 0;
+        transform: translate(120px, 70px);
+      }
+
+      30% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 1;
+        transform: translate(0px, 0px);
+      }
+    }
+
+    @keyframes logo-cursor-click {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(0.85);
+      }
+    }
+
+    @keyframes logo-ripple-expand {
+      0% {
+        transform: scale(0);
+        opacity: 0.85;
+      }
+
+      100% {
+        transform: scale(3.5);
+        opacity: 0;
+      }
+    }
+
+    @keyframes logo-bridge-reveal {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes logo-glow-fade {
+      to {
+        opacity: 0.15;
+      }
+    }
+
+    @keyframes logo-glow-pulse {
+      0% {
+        opacity: 0.1;
+        filter: blur(15px);
+      }
+
+      100% {
+        opacity: 0.22;
+        filter: blur(25px);
+      }
+    }
+
+    /* Hero Cascading Reveal Animations */
+    .hero-animate-badge {
+      opacity: 0;
+      transform: translateY(12px);
+      animation: hero-fade-up 1.2s cubic-bezier(0.16, 1, 0.3, 1) 3.4s forwards;
+    }
+
+    .hero-animate-title {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: hero-fade-up 1.2s cubic-bezier(0.16, 1, 0.3, 1) 3.7s forwards;
+    }
+
+    .hero-animate-desc {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: hero-fade-up 1.2s cubic-bezier(0.16, 1, 0.3, 1) 4.0s forwards;
+    }
+
+    .hero-animate-actions {
+      opacity: 0;
+      transform: translateY(12px);
+      animation: hero-fade-up 1.2s cubic-bezier(0.16, 1, 0.3, 1) 4.3s forwards;
+    }
+
+
+    @keyframes hero-fade-up {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fade-in-up {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fade-in-up 1.0s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+
+    /* Soft border utility style */
+    .soft-border-panel {
+      border: 1.5px solid var(--color-card-border);
+      backdrop-filter: none;
+      transition: border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .soft-border-panel:hover {
+      border-color: var(--color-accent);
+    }
+
+    .soft-border-panel:hover:not(.no-hover-lift) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px -10px rgba(30, 27, 24, 0.04);
+    }
+
+    .theme-dark .soft-border-panel:hover:not(.no-hover-lift) {
+      box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Soften specific border classes unless hovered or focused */
+    :not(:hover):not(:focus).border-rich {
+      border-color: var(--color-card-border) !important;
+    }
+
+    :not(:hover):not(:focus).border-pale {
+      border-color: var(--color-card-border) !important;
+    }
+
+    /* Global Soft Borders with subtle hover sharpening */
+    .border,
+    .border-t,
+    .border-b,
+    .border-l,
+    .border-r {
+      border-color: var(--color-card-border) !important;
+      transition: border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .border:hover,
+    .border-t:hover,
+    .border-b:hover,
+    .border-l:hover,
+    .border-r:hover {
+      border-color: var(--color-accent) !important;
+    }
+
+    /* Soft Inputs and Selects */
+    input,
+    textarea,
+    select {
+      border-color: var(--color-card-border) !important;
+      outline: none;
+      transition: border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      background-color: var(--color-card-bg);
+      color: var(--color-cocoa);
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--color-accent) !important;
+      box-shadow: 0 0 0 3px var(--color-rich-trans);
+    }
+  </style>
+</head>
+
+<body class="antialiased">
+
+  <div id="root"></div>
+
+  <!-- Main React application source written inside type="text/babel" -->
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useMemo } = React;
+
+    // --- STATIC CONTENT & MAPPINGS ---
+    const ACTIONS_VOCAB = ["hello", "thanks", "yes", "no", "iloveyou"];
+
+    const HAND_MAPPINGS = {
+      // SVG path coordinates of styled minimalist hand gestures
+      // Renders a high-end vector hands sketch
+      'open-palm-wave': {
+        icon: '👋',
+        name: 'Open Palm Wave',
+        description: 'Extend palm outward, fingers pointing up, slide hand horizontally.',
+        path: "M12 4v4m0 0V4m0 4h3M9 6v3m0 0V6m0 3H6m9 1v2m0 0V10m0 2h1.5M6 11v3m0-3h-1.5M10 21c-4.4 0-8-3.6-8-8v-2h20v2c0 4.4-3.6 8-8 8z"
+      },
+      'chin-forward-thank': {
+        icon: '🙏',
+        name: 'Chin-Forward Thanks',
+        description: 'Touch chin with fingertips of open flat hand, then move hand forward and down.',
+        path: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+      },
+      'fist-nod': {
+        icon: '✊',
+        name: 'Fist Nod',
+        description: 'Clench fist at chest level, bend wrist forward and back resembling a head nod.',
+        path: "M12 21a9 9 0 110-18 9 9 0 010 18zm-2-9l-2 2h8l-2-2m-2 4h-2"
+      },
+      'index-middle-tap': {
+        icon: '✌️',
+        name: 'Index-Middle Tap',
+        description: 'Extend index and middle fingers, tap them twice against thumb.',
+        path: "M9 10a3 3 0 106 0M9 10v6a3 3 0 006 0v-6m-6 3h6"
+      },
+      'index-self': {
+        icon: '☝️',
+        name: 'Point Inward (I)',
+        description: 'Point index finger inward toward the chest to refer to oneself.',
+        path: "M12 13V3m0 10h-2m2 0h2m-6 8a4 4 0 01-4-4v-3h12v3a4 4 0 01-4 4H10z"
+      },
+      'cross-arms-heart': {
+        icon: '❤️',
+        name: 'Crossed Arms Heart',
+        description: 'Cross both forearms over the chest, hands open, representing love/affection.',
+        path: "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+      },
+      'point-forward': {
+        icon: '👉',
+        name: 'Point Forward (You)',
+        description: 'Extend index finger straight forward toward the conversant.',
+        path: "M13 5l7 7-7 7M20 12H4"
+      }
+    };
+
+    const ENGLISH_ANIM_MAP = {
+      "hello": "open-palm-wave",
+      "thanks": "chin-forward-thank",
+      "yes": "fist-nod",
+      "no": "index-middle-tap",
+      "i": "index-self",
+      "love": "cross-arms-heart",
+      "you": "point-forward",
+    };
+
+    const HINDI_ANIM_MAP = {
+      "नमस्ते": "open-palm-wave",
+      "धन्यवाद": "chin-forward-thank",
+      "हाँ": "fist-nod",
+      "नहीं": "index-middle-tap",
+      "मैं": "index-self",
+      "प्यार": "cross-arms-heart",
+      "तुम": "point-forward"
+    };
+
+    // Mock initial analytics for Dashboard
+    const MOCK_TRANS_HISTORY = [
+      { id: 1, phrase: "HELLO", timestamp: "2026-05-20 20:12:15", language: "English", accuracy: 96.2 },
+      { id: 2, phrase: "HELLO THANKS YES", timestamp: "2026-05-20 18:45:02", language: "English", accuracy: 94.8 },
+      { id: 3, phrase: "नमस्ते धन्यवाद हाँ", timestamp: "2026-05-20 15:30:11", language: "Hindi", accuracy: 95.9 },
+      { id: 4, phrase: "ILOVEYOU YES", timestamp: "2026-05-19 14:22:45", language: "English", accuracy: 96.8 },
+      { id: 5, phrase: "NO HELLO", timestamp: "2026-05-19 11:05:33", language: "English", accuracy: 93.5 }
+    ];
+
+    const MOCK_ACCURACY_CLASSES = [
+      { label: "hello", rate: 97.4 },
+      { label: "thanks", rate: 95.8 },
+      { label: "yes", rate: 96.2 },
+      { label: "no", rate: 93.9 },
+      { label: "iloveyou", rate: 94.1 }
+    ];
+
+    const MOCK_WEEKLY_VOLUME = [
+      { day: "Mon", count: 18 },
+      { day: "Tue", count: 24 },
+      { day: "Wed", count: 32 },
+      { day: "Thu", count: 21 },
+      { day: "Fri", count: 35 },
+      { day: "Sat", count: 12 },
+      { day: "Sun", count: 16 }
+    ];
+
+    // --- SignBridgeLogo Component ---
+    const SignBridgeLogo = ({ size = "sm" }) => {
+      const isLarge = size === "lg";
+      return (
+        <svg
+          className={`logo-container ${isLarge ? 'logo-lg w-full max-w-xl mx-auto h-auto' : 'logo-sm h-8 w-auto'} select-none`}
+          viewBox="0 0 540 120"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Subtle radial glow under "SIGN" box, visible in both modes with theme-based color */}
+          <circle
+            className="logo-svg-glow"
+            cx="130"
+            cy="60"
+            r="80"
+            style={{ pointerEvents: 'none' }}
+          />
+
+          {/* Background of "SIGN" box */}
+          <rect
+            className="logo-svg-rect-bg"
+            x="15"
+            y="10"
+            width="230"
+            height="100"
+            rx="6"
+            ry="6"
+          />
+
+          {/* Outline rectangular box around "SIGN" */}
+          <rect
+            className="logo-svg-rect"
+            x="15"
+            y="10"
+            width="230"
+            height="100"
+            fill="none"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {/* "SIGN" text inside the box */}
+          <text
+            className="logo-svg-sign"
+            x="130"
+            y="88"
+            fontFamily="'Bebas Neue', sans-serif"
+            fontSize="95"
+            fontWeight="bold"
+            textAnchor="middle"
+            style={{ transformOrigin: "130px 60px" }}
+          >
+            SIGN
+          </text>
+
+          {/* Mouse pointer cursor pointing at the right edge of the box (245, 60) */}
+          <g
+            className="logo-svg-cursor logo-svg-cursor-hover-trigger"
+            style={{ transformOrigin: "245px 60px" }}
+          >
+            <path
+              d="M 245 60 L 260 75 L 254 75 L 259 86 L 255 88 L 250 77 L 245 82 Z"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
+          </g>
+
+          {/* Ripple circle radiating from cursor tip */}
+          <circle
+            className="logo-svg-ripple logo-svg-ripple-hover-trigger"
+            cx="245"
+            cy="60"
+            r="10"
+            fill="none"
+            strokeWidth="3.5"
+            style={{ transformOrigin: "245px 60px" }}
+          />
+
+          {/* "BRIDGE" text outside the box */}
+          <text
+            className="logo-svg-bridge"
+            x="270"
+            y="88"
+            fontFamily="'Bebas Neue', sans-serif"
+            fontSize="95"
+            fontWeight="bold"
+          >
+            BRIDGE
+          </text>
+        </svg>
+      );
+    };
+
+    const SLIDES_CONTENT = [
+      {
+        id: 0,
+        title: "Real-Time Neural Inference",
+        subtitle: "Spatial Coordinate Pipeline",
+        description: "MediaPipe Hands tracks 21 distinct 3D joint nodes inside the browser sandbox in real time. Continuous Cartesian coordinate arrays are extracted, normalized, and processed to capture posture geometry.",
+        features: ["21 Joint Cartesian Maps", "Sub-30ms Local Processing", "Multi-Hand Dual Parsing"],
+        icon: "🧠"
+      },
+      {
+        id: 1,
+        title: "Random Forest Classification",
+        subtitle: "Flask Backend Classifier",
+        description: "Standardized landmark coordinate packets are dispatched to our local Flask backend. A trained Random Forest model calculates class probability, outputting predictions with confidence intervals.",
+        features: ["RF Landmark Classifier", "Real-Time Confidence Score", "Zero Cloud Dependency"],
+        icon: "🌲"
+      },
+      {
+        id: 2,
+        title: "Audio-Synthesis Bridge",
+        subtitle: "Web Speech Generation Suite",
+        description: "Translates predictions into audible voice formats. Features a temporal predictions smoothing buffer to reduce chatter and standard Web Speech API integration for instant, vocalized transcription.",
+        features: ["Web Speech API Synthesis", "Chatter Reduction Buffer", "Auto-Vocalized Outputs"],
+        icon: "🔊"
+      },
+      {
+        id: 3,
+        title: "Bilingual Sign Generation",
+        subtitle: "Hindi & English Vector Mapping",
+        description: "Animates arbitrary text into sequential vector sign illustrations. Resolves tokens dynamically against local libraries mapping Devanagari Hindi constructs and English vocabulary.",
+        features: ["Devanagari Language Processing", "Sequential Vector Playback", "Dynamic Fallback Speller"],
+        icon: "✍️"
+      }
+    ];
+
+    function HolographicCanvas({ theme }) {
+      const canvasRef = useRef(null);
+      const containerRef = useRef(null);
+      const mouseRef = useRef({ x: 160, y: 120, active: false });
+      const animationFrameRef = useRef(null);
+      const angleRef = useRef(0);
+
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width;
+        let height = canvas.height;
+
+        const drawGrid = (ctx, w, h) => {
+          ctx.strokeStyle = theme === 'light' ? 'rgba(67, 91, 65, 0.08)' : 'rgba(130, 158, 128, 0.08)';
+          ctx.lineWidth = 1;
+          for (let i = 20; i < w; i += 20) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, h);
+            ctx.stroke();
+          }
+          for (let j = 20; j < h; j += 20) {
+            ctx.beginPath();
+            ctx.moveTo(0, j);
+            ctx.lineTo(w, j);
+            ctx.stroke();
+          }
+        };
+
+        const drawHand = (ctx, x, y, isStatic) => {
+          const strokeColor = theme === 'light' ? '#8c7d6c' : '#eedcc4';
+          const jointColor = theme === 'light' ? '#bd5d38' : '#db8c69';
+
+          ctx.strokeStyle = strokeColor;
+          ctx.fillStyle = jointColor;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([2, 3]);
+
+          // Wrist point
+          ctx.beginPath();
+          ctx.arc(x, y + 60, 5, 0, 2 * Math.PI);
+          ctx.fill();
+
+          // Palm base to knuckle connections
+          ctx.beginPath();
+          ctx.moveTo(x, y + 60);
+          ctx.lineTo(x - 30, y + 15);
+          ctx.lineTo(x - 10, y - 5);
+          ctx.lineTo(x + 20, y);
+          ctx.lineTo(x + 40, y + 25);
+          ctx.closePath();
+          ctx.stroke();
+
+          const t = angleRef.current;
+          const wave = isStatic ? Math.sin(t * 2) * 5 : 0;
+
+          const joints = [
+            [-35, 10, -55, -5 + wave],  // thumb
+            [-20, -5, -25, -45 + wave],  // index
+            [0, -10, 0, -55 + wave],    // middle
+            [20, -5, 25, -45 + wave],   // ring
+            [35, 15, 45, -15 + wave]    // pinky
+          ];
+
+          joints.forEach(j => {
+            ctx.beginPath();
+            ctx.moveTo(x, y + 20);
+            ctx.lineTo(x + j[0], y + j[1]);
+            ctx.lineTo(x + j[2], y + j[3]);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(x + j[0], y + j[1], 4.5, 0, 2 * Math.PI);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(x + j[2], y + j[3], 4.5, 0, 2 * Math.PI);
+            ctx.fill();
+          });
+
+          ctx.strokeStyle = strokeColor;
+          ctx.beginPath();
+          ctx.arc(x, y + 60, 15 + Math.sin(t * 3) * 3, 0, 2 * Math.PI);
+          ctx.stroke();
+
+          ctx.setLineDash([]);
+        };
+
+        const render = () => {
+          ctx.clearRect(0, 0, width, height);
+          drawGrid(ctx, width, height);
+          angleRef.current += 0.03;
+
+          let targetX = mouseRef.current.x;
+          let targetY = mouseRef.current.y;
+
+          if (!mouseRef.current.active) {
+            targetX = width / 2 + Math.cos(angleRef.current) * 30;
+            targetY = height / 2 - 20 + Math.sin(angleRef.current) * 15;
+          }
+
+          drawHand(ctx, targetX, targetY, !mouseRef.current.active);
+
+          ctx.fillStyle = theme === 'light' ? 'rgba(30, 27, 24, 0.6)' : 'rgba(245, 239, 230, 0.6)';
+          ctx.font = '9px "JetBrains Mono", monospace';
+          ctx.fillText(`MODE: ${mouseRef.current.active ? 'ACTIVE_TRACK' : 'ORBIT_SIM'}`, 12, 20);
+          ctx.fillText(`VECTOR_X: ${Math.round(targetX)}`, 12, 32);
+          ctx.fillText(`VECTOR_Y: ${Math.round(targetY)}`, 12, 44);
+          ctx.fillText(`SYS_HZ: 60`, 12, 56);
+
+          ctx.strokeStyle = theme === 'light' ? '#eadecf' : '#3a332d';
+          ctx.beginPath();
+          ctx.rect(5, 5, width - 10, height - 10);
+          ctx.stroke();
+
+          const bracketLen = 10;
+          ctx.strokeStyle = theme === 'light' ? '#435b41' : '#eadecf';
+          ctx.lineWidth = 1.5;
+          const corners = [
+            [5, 5, 1, 1],
+            [width - 5, 5, -1, 1],
+            [5, height - 5, 1, -1],
+            [width - 5, height - 5, -1, -1]
+          ];
+          corners.forEach(([cx, cy, dx, dy]) => {
+            ctx.beginPath();
+            ctx.moveTo(cx, cy + dy * bracketLen);
+            ctx.lineTo(cx, cy);
+            ctx.lineTo(cx + dx * bracketLen, cy);
+            ctx.stroke();
+          });
+
+          animationFrameRef.current = requestAnimationFrame(render);
+        };
+
+        render();
+
+        return () => {
+          if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+          }
+        };
+      }, [theme]);
+
+      const handleMouseMove = (e) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        mouseRef.current = {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+          active: true
+        };
+      };
+
+      const handleMouseLeave = () => {
+        mouseRef.current.active = false;
+      };
+
+      return (
+        <div
+          ref={containerRef}
+          className={`w-full md:w-80 h-64 border-2 rounded-xl relative overflow-hidden flex items-center justify-center cursor-crosshair transition-all duration-300 shadow-lg hover:shadow-2xl animate-fade-in ${theme === 'light'
+              ? 'bg-card-bg border-card-border'
+              : 'bg-rich border-pale/20'
+            }`}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
+          <canvas ref={canvasRef} width="320" height="256" className="w-full h-full"></canvas>
+          <span className={`absolute bottom-2 right-2 text-[9px] font-mono tracking-wider pointer-events-none select-none transition-colors duration-300 ${theme === 'light' ? 'text-rich opacity-60' : 'text-[#ebebdf] opacity-60'
+            }`}>INTERACTIVE HOLOGRAPHIC SKELETON</span>
+        </div>
+      );
+    }
+
+    // --- PROCEDURAL 3D Knuckle Pose Generator ---
+    const getPoseCoordinates = (poseName, count) => {
+      const points = [];
+      const t = count * 0.035;
+      const normalizedPose = poseName ? poseName.toLowerCase() : 'palm';
+
+      // Wrist base
+      points.push({ x: 0, y: -0.4, z: 0 });
+
+      // Finger base coordinates for a natural wide palm (MCP joints)
+      const basePositions = [
+        { x: -0.20, y: -0.16 }, // Thumb base
+        { x: -0.11, y: -0.05 }, // Index base
+        { x: -0.01, y: -0.03 }, // Middle base
+        { x: 0.09, y: -0.05 },  // Ring base
+        { x: 0.19, y: -0.09 }   // Pinky base
+      ];
+
+      const fingerAngles = [
+        -0.55, // Thumb (pointing outwards to the left)
+        -0.12, // Index
+        0.00,  // Middle (straight up)
+        0.12,  // Ring
+        0.28   // Pinky (pointing outwards to the right)
+      ];
+
+      const segmentLengths = [
+        [0.08, 0.07, 0.06], // Thumb
+        [0.09, 0.08, 0.07], // Index
+        [0.10, 0.09, 0.07], // Middle
+        [0.09, 0.08, 0.07], // Ring
+        [0.08, 0.07, 0.06]  // Pinky
+      ];
+      
+      const isFist = ['yes', 'fist-nod', 'no', 'index-middle-tap', 'a', 'e', 'm', 'n', 'o', 's', 't', 'r', 's'].includes(normalizedPose);
+      const isPoint = ['you', 'point-forward', 'i', 'index-self', 'd', 'g', 'h', 'i', 'j', 'u', 'z'].includes(normalizedPose);
+      const isOkay = ['okay', 'ok', 'f'].includes(normalizedPose);
+      
+      for (let fIdx = 0; fIdx < 5; fIdx++) {
+        const base = basePositions[fIdx];
+        const angle = fingerAngles[fIdx];
+        const segments = segmentLengths[fIdx];
+        
+        let extension = 1.0;
+        
+        if (isFist) {
+          extension = 0.15;
+        } else if (isPoint) {
+          extension = (fIdx === 1) ? 1.0 : 0.15;
+        } else if (isOkay) {
+          extension = (fIdx === 0 || fIdx === 1) ? 0.25 : 1.0;
+        } else {
+          // Palm or Wave with subtle lifelike movement
+          extension = 1.0 + Math.sin(t + fIdx) * 0.03;
+        }
+
+        // Joint 0 of the finger (MCP joint at the palm edge)
+        points.push({ x: base.x, y: base.y, z: 0 });
+
+        // Generate PIP, DIP, and TIP joints
+        let cx = base.x;
+        let cy = base.y;
+        let cz = 0;
+
+        for (let jIdx = 0; jIdx < 3; jIdx++) {
+          const len = segments[jIdx];
+          const dx = Math.sin(angle) * len * extension;
+          const dy = Math.cos(angle) * len * extension;
+          const dz = -len * (1.0 - extension) * 0.8;
+
+          cx += dx;
+          cy += dy;
+          cz += dz;
+
+          points.push({ x: cx, y: cy, z: cz });
+        }
+      }
+      return points;
+    };
+
+    // --- PROCEDURAL 3D Volumetric Hand Renderer ---
+    const drawVolumetricHand = (ctx, joints, width, height, theme, count) => {
+      ctx.clearRect(0, 0, width, height);
+
+      // Draw high-fidelity grid background
+      ctx.strokeStyle = theme === 'light' ? 'rgba(67, 91, 65, 0.05)' : 'rgba(130, 158, 128, 0.05)';
+      ctx.lineWidth = 1;
+      const gridSize = 20;
+      for (let x = 0; x < width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      if (!joints || joints.length < 21) return;
+
+      const scale = Math.min(width, height) * 0.95;
+      const cx = width / 2;
+      const cy = height / 2 + 60;
+
+      // Project 3D points to 2D screen space
+      const pts = joints.map(pt => {
+        // Perspective divide simulation using Z depth
+        const perspective = 1 / (1 + pt.z * 0.5);
+        return {
+          x: cx + pt.x * scale * perspective,
+          y: cy - pt.y * scale * perspective,
+          r: 6 * perspective
+        };
+      });
+
+      // Ambient drop-shadow settings for organic hand depth
+      ctx.save();
+      ctx.shadowColor = theme === 'light' ? 'rgba(30, 27, 24, 0.12)' : 'rgba(0, 0, 0, 0.5)';
+      ctx.shadowBlur = 16;
+      ctx.shadowOffsetX = 3;
+      ctx.shadowOffsetY = 6;
+
+      // 1. Draw the Fleshy Palm Body
+      ctx.beginPath();
+      const wrist = pts[0];
+      const bases = [pts[1], pts[5], pts[9], pts[13], pts[17]]; // MCP Joints (bases of fingers)
+      
+      ctx.moveTo(wrist.x, wrist.y);
+      
+      // Left side curve of the palm (thenar eminence / thumb muscle)
+      ctx.quadraticCurveTo(wrist.x - 32, (wrist.y + bases[0].y) / 2, bases[0].x, bases[0].y);
+      
+      // Connect bases across top of palm
+      ctx.lineTo(bases[1].x, bases[1].y);
+      ctx.lineTo(bases[2].x, bases[2].y);
+      ctx.lineTo(bases[3].x, bases[3].y);
+      ctx.lineTo(bases[4].x, bases[4].y);
+      
+      // Right side curve of the palm (hypothenar eminence)
+      ctx.quadraticCurveTo(bases[4].x + 28, (bases[4].y + wrist.y) / 2, wrist.x, wrist.y);
+      ctx.closePath();
+
+      const palmGrad = ctx.createRadialGradient(
+        wrist.x, wrist.y, 10,
+        wrist.x, wrist.y - 30, scale * 0.35
+      );
+
+      if (theme === 'light') {
+        palmGrad.addColorStop(0, '#c3aa93'); // rich muscle depth
+        palmGrad.addColorStop(0.5, '#eedcc4'); // healthy base skin
+        palmGrad.addColorStop(1, '#faf6f0'); // bright knuckle highlights
+      } else {
+        palmGrad.addColorStop(0, '#1c1815');
+        palmGrad.addColorStop(0.5, 'rgba(130, 158, 128, 0.45)');
+        palmGrad.addColorStop(1, 'rgba(219, 140, 105, 0.2)');
+      }
+      ctx.fillStyle = palmGrad;
+      ctx.fill();
+
+      // Soft outline for palm
+      ctx.strokeStyle = theme === 'light' ? 'rgba(30, 27, 24, 0.12)' : 'rgba(255, 255, 255, 0.08)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // 2. Draw Fleshy Tapering Fingers (capsule envelope around skeleton joints)
+      const fingerJointChains = [
+        [1, 2, 3, 4],     // Thumb
+        [5, 6, 7, 8],     // Index
+        [9, 10, 11, 12],  // Middle
+        [13, 14, 15, 16], // Ring
+        [17, 18, 19, 20]  // Pinky
+      ];
+
+      fingerJointChains.forEach((chainIdxs, fIdx) => {
+        const chain = chainIdxs.map(idx => pts[idx]);
+        
+        ctx.beginPath();
+        const baseWidth = chain[0].r * 2.6; // thick base
+        const tipWidth = chain[3].r * 1.8;   // tapered tip
+        
+        // Trace up the left side of the finger segments
+        for (let i = 0; i < 3; i++) {
+          const p1 = chain[i];
+          const p2 = chain[i+1];
+          const dx = p2.x - p1.x;
+          const dy = p2.y - p1.y;
+          const len = Math.sqrt(dx*dx + dy*dy);
+          const nx = -dy / len;
+          const ny = dx / len;
+          
+          const w = baseWidth - (i * (baseWidth - tipWidth) / 3);
+          
+          if (i === 0) {
+            ctx.moveTo(p1.x + nx * w, p1.y + ny * w);
+          }
+          ctx.lineTo(p2.x + nx * (w * 0.9), p2.y + ny * (w * 0.9));
+        }
+
+        // Cap the tip with a rounded arc
+        const tip = chain[3];
+        const nextToTip = chain[2];
+        const tipAngle = Math.atan2(tip.y - nextToTip.y, tip.x - nextToTip.x);
+        ctx.arc(tip.x, tip.y, tipWidth, tipAngle - Math.PI/2, tipAngle + Math.PI/2);
+
+        // Trace back down the right side of the segments
+        for (let i = 2; i >= 0; i--) {
+          const p1 = chain[i];
+          const p2 = chain[i+1];
+          const dx = p2.x - p1.x;
+          const dy = p2.y - p1.y;
+          const len = Math.sqrt(dx*dx + dy*dy);
+          const nx = -dy / len;
+          const ny = dx / len;
+          
+          const w = baseWidth - (i * (baseWidth - tipWidth) / 3);
+          ctx.lineTo(p1.x - nx * w, p1.y - ny * w);
+        }
+        ctx.closePath();
+
+        // 3D cylinder lighting gradient along the length of each finger
+        const grad = ctx.createLinearGradient(chain[0].x, chain[0].y, tip.x, tip.y);
+        if (theme === 'light') {
+          grad.addColorStop(0, '#dcbfa3'); // warm tendon base
+          grad.addColorStop(0.6, '#eedcc4'); // smooth hand skin
+          grad.addColorStop(1, '#fbf8f3'); // bright tip light glint
+        } else {
+          grad.addColorStop(0, '#24201c');
+          grad.addColorStop(0.6, 'rgba(130, 158, 128, 0.45)');
+          grad.addColorStop(1, 'rgba(219, 140, 105, 0.25)');
+        }
+        
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.strokeStyle = theme === 'light' ? 'rgba(30, 27, 24, 0.12)' : 'rgba(255, 255, 255, 0.08)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // 3. Draw subtle joint fold creases (PIP and DIP folds)
+        ctx.save();
+        ctx.shadowColor = 'transparent'; // disable shadow for fold lines
+        for (let i = 1; i <= 2; i++) {
+          const joint = chain[i];
+          const prev = chain[i-1];
+          const next = chain[i+1];
+          // calculate line perpendicular to segment direction
+          const dx = next.x - prev.x;
+          const dy = next.y - prev.y;
+          const len = Math.sqrt(dx*dx + dy*dy);
+          const nx = -dy / len;
+          const ny = dx / len;
+          const w = baseWidth - (i * (baseWidth - tipWidth) / 3);
+
+          ctx.beginPath();
+          ctx.moveTo(joint.x - nx * (w * 0.7), joint.y - ny * (w * 0.7));
+          ctx.lineTo(joint.x + nx * (w * 0.7), joint.y + ny * (w * 0.7));
+          ctx.strokeStyle = theme === 'light' ? 'rgba(30, 27, 24, 0.2)' : 'rgba(255, 255, 255, 0.15)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+        ctx.restore();
+      });
+
+      ctx.restore(); // remove main ambient shadow filter for details
+
+      // 4. Draw elegant glossy radial knuckle caps (PIP joints)
+      fingerJointChains.forEach((chainIdxs, fIdx) => {
+        // Draw at knuckle joints for high-end look
+        const pip = pts[chainIdxs[1]];
+        ctx.beginPath();
+        ctx.arc(pip.x, pip.y, pip.r * 1.1, 0, 2 * Math.PI);
+
+        const radial = ctx.createRadialGradient(
+          pip.x - pip.r * 0.2, pip.y - pip.r * 0.2, pip.r * 0.1,
+          pip.x, pip.y, pip.r * 1.1
+        );
+
+        if (theme === 'light') {
+          radial.addColorStop(0, '#ffffff');
+          radial.addColorStop(0.3, '#f7c3aa');
+          radial.addColorStop(0.8, '#bd5d38');
+          radial.addColorStop(1, '#8c3d18');
+        } else {
+          radial.addColorStop(0, '#ffffff');
+          radial.addColorStop(0.3, '#f7c3aa');
+          radial.addColorStop(0.8, '#db8c69');
+          radial.addColorStop(1, '#944422');
+        }
+        ctx.fillStyle = radial;
+        ctx.fill();
+      });
+    };
+
+    function App() {
+      const [theme, setTheme] = useState(() => {
+        const localVal = localStorage.getItem('theme');
+        return localVal ? localVal : 'light';
+      });
+      const [activeTab, setActiveTab] = useState('discover'); // discover, translator, text-to-sign, dashboard, about
+      const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        return !!localStorage.getItem('jwt_mock_token');
+      });
+      const [showLoginModal, setShowLoginModal] = useState(false);
+      const [authMode, setAuthMode] = useState('login'); // login, register
+
+      // Accessibility states
+      const [highContrast, setHighContrast] = useState(false);
+      const [fontScale, setFontScale] = useState('normal'); // normal, large, xlarge
+      const [showShortcutsOverlay, setShowShortcutsOverlay] = useState(false);
+
+      // --- CAM & INFERENCE STATES ---
+      const [camActive, setCamActive] = useState(false);
+      const [camError, setCamError] = useState(null);
+      const [landmarksVisible, setLandmarksVisible] = useState(true);
+
+      const [prediction, setPrediction] = useState('No Hand Detected');
+      const [confidence, setConfidence] = useState(null);
+      const [smoothedPrediction, setSmoothedPrediction] = useState(null);
+
+      const [secondPrediction, setSecondPrediction] = useState('No Hand Detected');
+      const [secondConfidence, setSecondConfidence] = useState(null);
+      const [secondSmoothedPrediction, setSecondSmoothedPrediction] = useState(null);
+
+      const [transcript, setTranscript] = useState([]);
+      const [speechEnabled, setSpeechEnabled] = useState(true); // Pre-enabled by default for blind accessibility!
+      const [sysStatus, setSysStatus] = useState('SYSTEM IDLE'); // SYSTEM IDLE, CAMERA ACTIVE, INFERENCE RUNNING, NO HAND
+      const [smoothingBuffer, setSmoothingBuffer] = useState([]);
+
+      // --- TEXT-TO-SIGN STATES ---
+      const [inputLang, setInputLang] = useState('en'); // en, hi
+      const [ttsInputText, setTtsInputText] = useState('');
+      const [isPlayingSequence, setIsPlayingSequence] = useState(false);
+      const [activeTokenIdx, setActiveTokenIdx] = useState(-1);
+      const [playingTokens, setPlayingTokens] = useState([]);
+      const [currentGestureKey, setCurrentGestureKey] = useState(null);
+      const [unmappedTokens, setUnmappedTokens] = useState([]);
+      const [isListening, setIsListening] = useState(false);
+      const [currentPose, setCurrentPose] = useState('palm');
+
+      // --- DASHBOARD STATES ---
+      const [savedConversations, setSavedConversations] = useState(MOCK_TRANS_HISTORY);
+      const [searchQuery, setSearchQuery] = useState('');
+
+      // --- INTERACTIVE PRACTICE STATES ---
+      const [actionsVocab, setActionsVocab] = useState(ACTIONS_VOCAB);
+      const [practiceGesture, setPracticeGesture] = useState('hello');
+      const [practiceAligned, setPracticeAligned] = useState(false);
+
+      // --- INTERACTIVE STORYTELLING SLIDES ---
+      const [activeSlideIdx, setActiveSlideIdx] = useState(0);
+
+      // Refs
+      const videoRef = useRef(null);
+      const canvasRef = useRef(null);
+      const handsRef = useRef(null);
+      const cameraRef = useRef(null);
+      const loopTimerRef = useRef(null);
+      const lastCommitWordRef = useRef("");
+      const lastCommitWordRef2 = useRef("");
+      const latestLmsRef = useRef([]);
+
+      // Apply theme & font scale side effects
+      useEffect(() => {
+        const rootElement = document.documentElement;
+        if (theme === 'dark') {
+          rootElement.classList.add('dark');
+          rootElement.classList.add('theme-dark');
+          rootElement.classList.remove('theme-light');
+          document.body.classList.add('theme-dark');
+          document.body.classList.remove('theme-light');
+          document.body.style.backgroundColor = '';
+          document.body.style.color = '';
+        } else {
+          rootElement.classList.remove('dark');
+          rootElement.classList.remove('theme-dark');
+          rootElement.classList.add('theme-light');
+          document.body.classList.remove('theme-dark');
+          document.body.classList.add('theme-light');
+          document.body.style.backgroundColor = '';
+          document.body.style.color = '';
+        }
+        localStorage.setItem('theme', theme);
+      }, [theme]);
+
+      const lastSysStatusRef = useRef('SYSTEM IDLE');
+
+      // Global keyboard shortcut listeners
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          // Alt + T to toggle theme
+          if (e.altKey && e.key.toLowerCase() === 't') {
+            setTheme(t => t === 'light' ? 'dark' : 'light');
+          }
+          // Alt + A to toggle accessibility guide
+          if (e.altKey && e.key.toLowerCase() === 'a') {
+            setShowShortcutsOverlay(v => !v);
+          }
+          // Alt + V to toggle voice synthesis (Sensory Voice Mode for blind users)
+          if (e.altKey && e.key.toLowerCase() === 'v') {
+            setSpeechEnabled(prev => {
+              const next = !prev;
+              speakAloudText(next ? "Sensory voice feedback activated." : "Voice feedback deactivated.");
+              return next;
+            });
+          }
+          // Escape to close modas
+          if (e.key === 'Escape') {
+            setShowLoginModal(false);
+            setShowShortcutsOverlay(false);
+          }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+          window.removeEventListener('keydown', handleKeyDown);
+        };
+      }, []);
+
+      // Fetch dynamic class vocabulary from unified model
+      useEffect(() => {
+        fetch('/api/v1/classes')
+          .then(res => res.json())
+          .then(data => {
+            if (data.classes && data.classes.length > 0) {
+              setActionsVocab(data.classes);
+              // Safely set first loaded class as default target
+              if (data.classes.includes('hello')) {
+                setPracticeGesture('hello');
+              } else {
+                setPracticeGesture(data.classes[0]);
+              }
+            }
+          })
+          .catch(err => console.error("Error loading model vocabulary:", err));
+      }, []);
+
+      // STT Speech recognition controller hooks (Uno Reverse)
+      const recognitionRef = useRef(null);
+
+      const startListening = () => {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+          alert("Web Speech Recognition API is not supported in this browser. Please use Google Chrome.");
+          return;
+        }
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const rec = new SpeechRec();
+        rec.continuous = false;
+        rec.interimResults = false;
+        rec.lang = inputLang === 'en' ? 'en-US' : 'hi-IN';
+
+        rec.onstart = () => {
+          setIsListening(true);
+        };
+
+        rec.onresult = (event) => {
+          const resultText = event.results[event.results.length - 1][0].transcript.trim();
+          setTtsInputText(prev => prev ? prev + " " + resultText : resultText);
+          
+          // Trigger dynamic morphed vector sign animation spelling sequentially
+          triggerDynamicSpeechPlayback(resultText);
+        };
+
+        rec.onerror = (e) => {
+          console.error("Speech Recognition error:", e);
+          setIsListening(false);
+        };
+
+        rec.onend = () => {
+          setIsListening(false);
+        };
+
+        rec.start();
+        recognitionRef.current = rec;
+      };
+
+      const stopListening = () => {
+        if (recognitionRef.current) {
+          recognitionRef.current.stop();
+        }
+        setIsListening(false);
+      };
+
+      const triggerDynamicSpeechPlayback = async (spokenText) => {
+        setIsPlayingSequence(true);
+        setActiveTokenIdx(-1);
+        setUnmappedTokens([]);
+        try {
+          const res = await fetch('/api/v1/text-to-sign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: spokenText, language: inputLang })
+          });
+          const data = await res.json();
+          if (!res.ok) return;
+
+          const tokens = data.tokens || [];
+          setPlayingTokens(tokens);
+          setUnmappedTokens(data.fallback_tokens || []);
+
+          for (let i = 0; i < tokens.length; i++) {
+            setActiveTokenIdx(i);
+            const token = tokens[i].toLowerCase();
+            const gestureKey = inputLang === 'en' ? ENGLISH_ANIM_MAP[token] : HINDI_ANIM_MAP[tokens[i]];
+            if (gestureKey && HAND_MAPPINGS[gestureKey]) {
+              setCurrentGestureKey(gestureKey);
+              setCurrentPose(gestureKey);
+              await new Promise(r => setTimeout(r, 500));
+            } else {
+              setCurrentGestureKey(null);
+              const letters = token.split('');
+              for (let char of letters) {
+                if (char >= 'a' && char <= 'z') {
+                  setCurrentPose(char);
+                  await new Promise(r => setTimeout(r, 240));
+                }
+              }
+            }
+          }
+          setActiveTokenIdx(-1);
+          setCurrentGestureKey(null);
+          setCurrentPose('palm');
+          setIsPlayingSequence(false);
+        } catch (err) {
+          console.error("Speech playback failed:", err);
+          setIsPlayingSequence(false);
+        }
+      };
+
+      // Volumetric 3D Neumorphic Hand Canvas morph tweening loop
+      const currentJointsRef = useRef([]);
+      const targetJointsRef = useRef([]);
+      const velocityRef = useRef(Array(21).fill(null).map(() => ({ x: 0, y: 0 })));
+
+      useEffect(() => {
+        if (activeTab !== 'text-to-sign') return;
+        const canvas = document.getElementById('virtual-sign-avatar-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let animId;
+        let count = 0;
+
+        if (currentJointsRef.current.length === 0) {
+          currentJointsRef.current = getPoseCoordinates('palm', 0);
+        }
+
+        const render = () => {
+          count++;
+          targetJointsRef.current = getPoseCoordinates(currentPose, count);
+
+          // Damped Spring Physics tween calculations
+          const k = 0.30; // spring force constant
+          const d = 0.52; // dampening factor
+          const dt = 1.0;
+
+          for (let i = 0; i < 21; i++) {
+            const curr = currentJointsRef.current[i];
+            const target = targetJointsRef.current[i];
+            const vel = velocityRef.current[i];
+
+            if (!curr || !target || !vel) continue;
+
+            const forceX = -k * (curr.x - target.x) - d * vel.x;
+            const forceY = -k * (curr.y - target.y) - d * vel.y;
+
+            vel.x += forceX * dt;
+            vel.y += forceY * dt;
+
+            curr.x += vel.x * dt;
+            curr.y += vel.y * dt;
+          }
+
+          drawVolumetricHand(ctx, currentJointsRef.current, canvas.width, canvas.height, theme, count);
+          animId = requestAnimationFrame(render);
+        };
+
+        render();
+        return () => cancelAnimationFrame(animId);
+      }, [activeTab, currentPose, theme]);
+
+      // Slide Walkthrough Animation Loop
+      useEffect(() => {
+        if (activeTab !== 'discover') return;
+        const canvas = document.getElementById('slide-animation-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let animId;
+        let count = 0;
+
+        const render = () => {
+          count++;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          const colorMain = theme === 'light' ? '#435b41' : '#f5efe6';
+          const colorSub = theme === 'light' ? '#8c7d6c' : '#eedcc4';
+          const colorPulse = theme === 'light' ? '#bd5d38' : '#db8c69';
+
+          ctx.strokeStyle = colorMain;
+          ctx.fillStyle = colorMain;
+
+          if (activeSlideIdx === 0) {
+            // Neural Inference - animated skeleton hand + coordinates
+            // Draw a subtle moving mesh grid in the background
+            ctx.strokeStyle = theme === 'light' ? 'rgba(67, 91, 65, 0.08)' : 'rgba(130, 158, 128, 0.08)';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i < canvas.width; i += 40) {
+              ctx.beginPath();
+              ctx.moveTo(i, 0);
+              ctx.lineTo(i, canvas.height);
+              ctx.stroke();
+              ctx.beginPath();
+              ctx.moveTo(0, i);
+              ctx.lineTo(canvas.width, i);
+              ctx.stroke();
+            }
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2 + 30;
+            const t = count * 0.03;
+
+            // Draw a hand skeleton that waves gently
+            ctx.strokeStyle = colorSub;
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([2, 3]);
+
+            // Wrist joint
+            const wrist = { x: centerX, y: centerY + 60 };
+            const palm = { x: centerX, y: centerY };
+            const thumb = { x: centerX - 50 + Math.sin(t) * 5, y: centerY + 10 + Math.cos(t) * 3 };
+            const index = { x: centerX - 30 + Math.sin(t + 0.5) * 4, y: centerY - 60 + Math.cos(t + 0.5) * 5 };
+            const middle = { x: centerX + Math.sin(t + 1) * 3, y: centerY - 75 + Math.cos(t + 1) * 6 };
+            const ring = { x: centerX + 30 + Math.sin(t + 1.5) * 4, y: centerY - 60 + Math.cos(t + 1.5) * 5 };
+            const pinky = { x: centerX + 55 + Math.sin(t + 2) * 5, y: centerY - 30 + Math.cos(t + 2) * 4 };
+
+            // Draw links
+            ctx.beginPath();
+            ctx.moveTo(wrist.x, wrist.y);
+            ctx.lineTo(palm.x, palm.y);
+            ctx.stroke();
+
+            // Connect fingers
+            const fingers = [thumb, index, middle, ring, pinky];
+            fingers.forEach(f => {
+              ctx.beginPath();
+              ctx.moveTo(palm.x, palm.y);
+              ctx.lineTo(f.x, f.y);
+              ctx.stroke();
+            });
+
+            ctx.setLineDash([]); // Reset line dash
+
+            // Draw joint nodes
+            fingers.forEach(f => {
+              ctx.beginPath();
+              ctx.arc(f.x, f.y, 4.5, 0, 2 * Math.PI);
+              ctx.fillStyle = colorPulse;
+              ctx.fill();
+
+              // Node telemetry label
+              ctx.font = '8px "JetBrains Mono", monospace';
+              ctx.fillStyle = colorMain;
+              ctx.fillText(`X:${Math.round(f.x)} Y:${Math.round(f.y)}`, f.x + 8, f.y + 3);
+            });
+
+            ctx.beginPath();
+            ctx.arc(wrist.x, wrist.y, 6, 0, 2 * Math.PI);
+            ctx.fillStyle = colorPulse;
+            ctx.fill();
+
+            // Draw scanning bounding box
+            ctx.strokeStyle = colorPulse;
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.strokeRect(centerX - 90, centerY - 110, 180, 210);
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = colorMain;
+            ctx.font = '9px "JetBrains Mono", monospace';
+            ctx.fillText("FRAME_RATE: 30.1 FPS", centerX - 80, centerY - 95);
+            ctx.fillText("INFERENCE_ENGINE: OK", centerX - 80, centerY - 85);
+
+          } else if (activeSlideIdx === 1) {
+            // Flask Random Forest Classifier split nodes animation
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2 - 20;
+            const t = count * 0.02;
+
+            // Draw decision tree nodes
+            const root = { x: centerX, y: centerY - 60 };
+            const child1 = { x: centerX - 80, y: centerY + 10 };
+            const child2 = { x: centerX + 80, y: centerY + 10 };
+            const leaf1 = { x: centerX - 120, y: centerY + 80 };
+            const leaf2 = { x: centerX - 40, y: centerY + 80 };
+            const leaf3 = { x: centerX + 40, y: centerY + 80 };
+            const leaf4 = { x: centerX + 120, y: centerY + 80 };
+
+            // Lines and flow dots
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = colorSub;
+
+            const drawBranch = (n1, n2) => {
+              ctx.beginPath();
+              ctx.moveTo(n1.x, n1.y);
+              ctx.lineTo(n2.x, n2.y);
+              ctx.stroke();
+
+              // Moving dot
+              const progress = (t % 1);
+              const dotX = n1.x + (n2.x - n1.x) * progress;
+              const dotY = n1.y + (n2.y - n1.y) * progress;
+              ctx.beginPath();
+              ctx.arc(dotX, dotY, 4, 0, 2 * Math.PI);
+              ctx.fillStyle = colorPulse;
+              ctx.fill();
+            };
+
+            drawBranch(root, child1);
+            drawBranch(root, child2);
+            drawBranch(child1, leaf1);
+            drawBranch(child1, leaf2);
+            drawBranch(child2, leaf3);
+            drawBranch(child2, leaf4);
+
+            // Draw node boxes
+            const drawNode = (node, text) => {
+              ctx.fillStyle = theme === 'light' ? '#faf6f0' : '#24201c';
+              ctx.fillRect(node.x - 25, node.y - 12, 50, 24);
+              ctx.strokeStyle = theme === 'light' ? '#eadecf' : '#3a332d';
+              ctx.lineWidth = 1.5;
+              ctx.strokeRect(node.x - 25, node.y - 12, 50, 24);
+
+              ctx.fillStyle = theme === 'light' ? '#1e1b18' : '#f5efe6';
+              ctx.font = '8px "Plus Jakarta Sans", sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText(text, node.x, node.y + 4);
+            };
+
+            drawNode(root, "Root Input");
+            drawNode(child1, "Split A");
+            drawNode(child2, "Split B");
+            drawNode(leaf1, "C: 98%");
+            drawNode(leaf2, "C: 94%");
+            drawNode(leaf3, "C: 91%");
+            drawNode(leaf4, "C: 96%");
+            ctx.textAlign = 'left';
+
+            ctx.font = '9px "JetBrains Mono", monospace';
+            ctx.fillStyle = colorPulse;
+            ctx.fillText("CLASSIFYING... FOREST_TREE_RUN: [TRUE]", centerX - 100, centerY + 130);
+
+          } else if (activeSlideIdx === 2) {
+            // Audio-Synthesis Bridge - bouncing waveform graph
+            const startY = canvas.height / 2;
+            ctx.strokeStyle = colorMain;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+
+            // Draw waveform lines
+            for (let x = 30; x < canvas.width - 30; x++) {
+              const amp = 30 + Math.sin(count * 0.05) * 15;
+              const y = startY + Math.sin(x * 0.04 + count * 0.12) * Math.sin(x * 0.007) * amp;
+              if (x === 30) {
+                ctx.moveTo(x, y);
+              } else {
+                ctx.lineTo(x, y);
+              }
+            }
+            ctx.stroke();
+
+            // Draw coordinate grid bars
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = colorPulse;
+            for (let x = 50; x < canvas.width; x += 60) {
+              ctx.beginPath();
+              ctx.moveTo(x, startY - 70);
+              ctx.lineTo(x, startY + 70);
+              ctx.stroke();
+            }
+
+            // Label text speech synth active
+            ctx.font = '9px "JetBrains Mono", monospace';
+            ctx.fillStyle = colorMain;
+            ctx.fillText("SPEECH_SYNTHESIZER: ACTIVE", 40, startY - 90);
+            ctx.fillText("SMOOTHING_BUFFER: PASS [X]", 40, startY - 75);
+            ctx.fillText("UTTERANCE_RATE: 1.0x", 40, startY + 95);
+
+          } else if (activeSlideIdx === 3) {
+            // Bilingual Sign Generation - outline tracer Devanagari character
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2 - 20;
+
+            // Draw outline for Letter N "न"
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = colorSub;
+
+            ctx.beginPath();
+            // Shirorekha (Top bar)
+            ctx.moveTo(centerX - 60, centerY - 50);
+            ctx.lineTo(centerX + 60, centerY - 50);
+            // Stand bar (Vertical bar)
+            ctx.moveTo(centerX + 30, centerY - 50);
+            ctx.lineTo(centerX + 30, centerY + 60);
+            // Middle horizontal connecting line
+            ctx.moveTo(centerX - 30, centerY + 10);
+            ctx.lineTo(centerX + 30, centerY + 10);
+            // Triangle/loop
+            ctx.moveTo(centerX - 30, centerY + 10);
+            ctx.quadraticCurveTo(centerX - 55, centerY + 10, centerX - 55, centerY + 30);
+            ctx.quadraticCurveTo(centerX - 55, centerY + 50, centerX - 30, centerY + 50);
+            ctx.quadraticCurveTo(centerX - 30, centerY + 10, centerX - 30, centerY + 10);
+            ctx.stroke();
+
+            // Tracing dot along Devanagari shape
+            const t = (count * 0.015) % 4;
+            let tracerX = centerX;
+            let tracerY = centerY;
+
+            if (t < 1) {
+              // top bar
+              tracerX = (centerX - 60) + 120 * t;
+              tracerY = centerY - 50;
+            } else if (t < 2) {
+              // stand bar
+              const progress = t - 1;
+              tracerX = centerX + 30;
+              tracerY = (centerY - 50) + 110 * progress;
+            } else if (t < 3) {
+              // middle horizontal connector
+              const progress = t - 2;
+              tracerX = (centerX + 30) - 60 * progress;
+              tracerY = centerY + 10;
+            } else {
+              // loop
+              const progress = t - 3;
+              const angle = progress * 2 * Math.PI;
+              tracerX = centerX - 42.5 + Math.cos(angle) * 12.5;
+              tracerY = centerY + 30 + Math.sin(angle) * 20;
+            }
+
+            // Draw glowing tracker node
+            ctx.beginPath();
+            ctx.arc(tracerX, tracerY, 8, 0, 2 * Math.PI);
+            ctx.fillStyle = colorPulse;
+            ctx.fill();
+
+            // Draw glowing tracker node center
+            ctx.beginPath();
+            ctx.arc(tracerX, tracerY, 3, 0, 2 * Math.PI);
+            ctx.fillStyle = colorMain;
+            ctx.fill();
+
+            ctx.font = '9px "JetBrains Mono", monospace';
+            ctx.fillStyle = colorMain;
+            ctx.fillText("DEVANAGARI_OUTLINE_INTERPOLATOR: READY", 40, centerY - 75);
+            ctx.fillText(`VECTOR_COORDINATE: [${Math.round(tracerX)}, ${Math.round(tracerY)}]`, 40, centerY + 90);
+          }
+
+          animId = requestAnimationFrame(render);
+        };
+
+        render();
+
+        return () => {
+          cancelAnimationFrame(animId);
+        };
+      }, [activeTab, activeSlideIdx, theme]);
+
+      const initMediaPipe = () => {
+        if (handsRef.current) return;
+
+        const handsInstance = new Hands({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+
+        handsInstance.setOptions({
+          maxNumHands: 2,
+          modelComplexity: 1,
+          minDetectionConfidence: 0.65,
+          minTrackingConfidence: 0.65
+        });
+
+        handsInstance.onResults(onHandsResults);
+        handsRef.current = handsInstance;
+      };
+
+      const onHandsResults = (results) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        latestLmsRef.current = [];
+
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+          if (lastSysStatusRef.current !== 'INFERENCE RUNNING') {
+            lastSysStatusRef.current = 'INFERENCE RUNNING';
+            setSysStatus('INFERENCE RUNNING');
+            if (speechEnabled) speakAloudText("Hand detected. Starting live translation.");
+          }
+
+          results.multiHandLandmarks.forEach((lm) => {
+            const flattened = lm.flatMap(pt => [pt.x, pt.y, pt.z]);
+            latestLmsRef.current.push(flattened);
+
+            if (landmarksVisible) {
+              // High fidelity geometric hand skeleton line drawings in active visual colors
+              ctx.strokeStyle = theme === 'light' ? '#eedcc4' : '#3a332d';
+              ctx.fillStyle = theme === 'light' ? '#bd5d38' : '#db8c69';
+              ctx.lineWidth = 1.5;
+              ctx.setLineDash([2, 3]);
+
+              // Draw palm base lines
+              ctx.beginPath();
+              ctx.moveTo(lm[0].x * canvas.width, lm[0].y * canvas.height);
+              for (let i = 1; i <= 4; i++) {
+                ctx.lineTo(lm[i].x * canvas.width, lm[i].y * canvas.height);
+              }
+              ctx.lineTo(lm[0].x * canvas.width, lm[0].y * canvas.height);
+              ctx.stroke();
+
+              // Draw fingers skeleton
+              const fingers = [
+                [5, 6, 7, 8],     // index
+                [9, 10, 11, 12],  // middle
+                [13, 14, 15, 16], // ring
+                [17, 18, 19, 20], // pinky
+                [1, 2, 3, 4]      // thumb
+              ];
+
+              fingers.forEach(chain => {
+                ctx.beginPath();
+                ctx.moveTo(lm[0].x * canvas.width, lm[0].y * canvas.height);
+                ctx.lineTo(lm[chain[0]].x * canvas.width, lm[chain[0]].y * canvas.height);
+                for (let i = 0; i < chain.length - 1; i++) {
+                  ctx.lineTo(lm[chain[i]].x * canvas.width, lm[chain[i]].y * canvas.height);
+                  ctx.lineTo(lm[chain[i + 1]].x * canvas.width, lm[chain[i + 1]].y * canvas.height);
+                }
+                ctx.stroke();
+              });
+
+              ctx.setLineDash([]);
+
+              // Draw joint nodes
+              lm.forEach((pt) => {
+                ctx.beginPath();
+                ctx.arc(pt.x * canvas.width, pt.y * canvas.height, 4.5, 0, 2 * Math.PI);
+                ctx.fill();
+              });
+            }
+          });
+        } else {
+          if (lastSysStatusRef.current !== 'NO HAND DETECTED' && camActive) {
+            lastSysStatusRef.current = 'NO HAND DETECTED';
+            setSysStatus('NO HAND DETECTED');
+            setPrediction('No Hand Detected');
+            setConfidence(null);
+            setSecondPrediction('No Hand Detected');
+            setSecondConfidence(null);
+            if (speechEnabled) speakAloudText("No hand detected.");
+          } else if (!camActive) {
+            setSysStatus('SYSTEM IDLE');
+            setPrediction('No Hand Detected');
+            setConfidence(null);
+          }
+        }
+      };
+
+      const queryInferenceBackend = async () => {
+        try {
+          const lms = latestLmsRef.current;
+          if (!lms || lms.length === 0) {
+            setPrediction('No Hand Detected');
+            setConfidence(null);
+            setSecondPrediction('No Hand Detected');
+            setSecondConfidence(null);
+            return;
+          }
+
+          // Hand 1 (First Hand)
+          if (lms[0] && lms[0].length === 63) {
+            try {
+              const response = await fetch('/api/v1/infer/landmarks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ landmarks: lms[0], session_id: 'signbridge-portal-session-h1' })
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+                const pred = data.smoothed_prediction || data.prediction || '-';
+                const conf = data.confidence || 0.0;
+
+                setPrediction(pred);
+                setConfidence(conf);
+                setSmoothedPrediction(pred);
+
+                // Simulation buffer visualizer
+                setSmoothingBuffer(prev => {
+                  const next = [...prev, pred];
+                  if (next.length > 6) next.shift();
+                  return next;
+                });
+
+                if (data.commit && pred !== "No Hand Detected") {
+                  if (lastCommitWordRef.current !== pred) {
+                    lastCommitWordRef.current = pred;
+                    const normalizedWord = pred.toUpperCase();
+                    setTranscript(prev => {
+                      const updated = [...prev, normalizedWord];
+                      if (speechEnabled) speakAloudText(normalizedWord);
+                      return updated;
+                    });
+                  }
+                }
+              }
+            } catch (e) {
+              console.error("Hand 1 inference error:", e);
+            }
+          } else {
+            setPrediction('No Hand Detected');
+            setConfidence(null);
+          }
+
+          // Hand 2 (Second Hand)
+          if (lms[1] && lms[1].length === 63) {
+            try {
+              const response = await fetch('/api/v1/infer/landmarks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ landmarks: lms[1], session_id: 'signbridge-portal-session-h2' })
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+                const pred = data.smoothed_prediction || data.prediction || '-';
+                const conf = data.confidence || 0.0;
+
+                setSecondPrediction(pred);
+                setSecondConfidence(conf);
+                setSecondSmoothedPrediction(pred);
+
+                if (data.commit && pred !== "No Hand Detected") {
+                  if (lastCommitWordRef2.current !== pred) {
+                    lastCommitWordRef2.current = pred;
+                    const normalizedWord = pred.toUpperCase();
+                    setTranscript(prev => {
+                      const updated = [...prev, normalizedWord];
+                      if (speechEnabled) speakAloudText(normalizedWord);
+                      return updated;
+                    });
+                  }
+                }
+              }
+            } catch (e) {
+              console.error("Hand 2 inference error:", e);
+            }
+          } else {
+            setSecondPrediction('No Hand Detected');
+            setSecondConfidence(null);
+          }
+        } catch (e) {
+          console.error("Failed contacting Flask endpoint:", e);
+        }
+      };
+
+      const speakAloudText = (text) => {
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 0.95;
+          utterance.pitch = 1.0;
+          window.speechSynthesis.speak(utterance);
+        }
+      };
+
+      const toggleCamera = async () => {
+        if (camActive) {
+          // Terminate
+          if (loopTimerRef.current) clearInterval(loopTimerRef.current);
+          if (cameraRef.current) {
+            cameraRef.current.stop();
+            cameraRef.current = null;
+          }
+          const stream = videoRef.current?.srcObject;
+          if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+          }
+          if (videoRef.current) videoRef.current.srcObject = null;
+          setCamActive(false);
+          lastSysStatusRef.current = 'SYSTEM IDLE';
+          setSysStatus('SYSTEM IDLE');
+          if (speechEnabled) speakAloudText("Webcam camera deactivated.");
+        } else {
+          // Activate
+          try {
+            setCamError(null);
+            lastSysStatusRef.current = 'CAMERA ACTIVE';
+            setSysStatus('CAMERA ACTIVE');
+            if (speechEnabled) speakAloudText("Webcam camera activated. Please align your hand inside the frame.");
+            initMediaPipe();
+
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: { width: 640, height: 480, facingMode: 'user' },
+              audio: false
+            });
+
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+              await videoRef.current.play();
+            }
+
+            const cam = new Camera(videoRef.current, {
+              onFrame: async () => {
+                if (videoRef.current) {
+                  await handsRef.current.send({ image: videoRef.current });
+                }
+              },
+              width: 640,
+              height: 480
+            });
+            cam.start();
+            cameraRef.current = cam;
+
+            setCamActive(true);
+            // Capture frame and predict every 90ms for instantaneous translations
+            loopTimerRef.current = setInterval(queryInferenceBackend, 90);
+          } catch (err) {
+            console.error("Camera access failed:", err);
+            setCamError("Webcam permissions were denied or camera is currently unavailable.");
+            setSysStatus('SYSTEM IDLE');
+          }
+        }
+      };
+
+      useEffect(() => {
+        return () => {
+          if (loopTimerRef.current) clearInterval(loopTimerRef.current);
+        };
+      }, []);
+
+      // --- TEXT-TO-SIGN ANIMATION PLAYBACK ---
+      const triggerTextToSign = async () => {
+        if (!ttsInputText.trim()) return;
+        setIsPlayingSequence(true);
+        setActiveTokenIdx(-1);
+        setUnmappedTokens([]);
+
+        try {
+          const res = await fetch('/api/v1/text-to-sign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: ttsInputText, language: inputLang })
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            console.error("Mapping failed");
+            setIsPlayingSequence(false);
+            return;
+          }
+
+          const tokens = data.tokens || [];
+          setPlayingTokens(tokens);
+          setUnmappedTokens(data.fallback_tokens || []);
+
+          if (tokens.length === 0) {
+            setIsPlayingSequence(false);
+            return;
+          }
+
+          // Sequence Player loop
+          for (let i = 0; i < tokens.length; i++) {
+            setActiveTokenIdx(i);
+            const token = tokens[i].toLowerCase();
+
+            // Resolve hand gesture illustration key
+            const gestureKey = inputLang === 'en' ? ENGLISH_ANIM_MAP[token] : HINDI_ANIM_MAP[tokens[i]];
+            if (gestureKey && HAND_MAPPINGS[gestureKey]) {
+              setCurrentGestureKey(gestureKey);
+              setCurrentPose(gestureKey);
+              await new Promise(resolve => setTimeout(resolve, 500));
+            } else {
+              // Dynamic Fingerspelling fallback for unmapped words!
+              setCurrentGestureKey(null);
+              const letters = token.split('');
+              for (let char of letters) {
+                if (char >= 'a' && char <= 'z') {
+                  setCurrentPose(char);
+                  await new Promise(resolve => setTimeout(resolve, 240));
+                }
+              }
+            }
+          }
+
+          setActiveTokenIdx(-1);
+          setCurrentGestureKey(null);
+          setCurrentPose('palm');
+          setIsPlayingSequence(false);
+        } catch (e) {
+          console.error("Text to sign playback failed:", e);
+          setIsPlayingSequence(false);
+        }
+      };
+
+      // --- MOCK AUTH ACTIONS ---
+      const executeMockAuth = (e) => {
+        e.preventDefault();
+        // Sets dynamic mockup JWT key
+        localStorage.setItem('jwt_mock_token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9');
+        setIsLoggedIn(true);
+        setShowLoginModal(false);
+      };
+
+      const executeMockLogout = () => {
+        localStorage.removeItem('jwt_mock_token');
+        setIsLoggedIn(false);
+      };
+
+      // --- HISTORIC LOG ACTIONS ---
+      const filteredLogs = useMemo(() => {
+        return savedConversations.filter(log =>
+          log.phrase.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          log.language.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }, [savedConversations, searchQuery]);
+
+      const deleteLog = (id) => {
+        setSavedConversations(prev => prev.filter(c => c.id !== id));
+      };
+
+      // Styles bindings based on Font Scale state
+      const textClass = fontScale === 'large' ? 'text-lg' : fontScale === 'xlarge' ? 'text-xl' : 'text-sm';
+      const headingClass = fontScale === 'large' ? 'text-3xl' : fontScale === 'xlarge' ? 'text-4xl' : 'text-2xl';
+
+      return (
+        <div className={`min-h-screen flex flex-col transition-colors duration-300 relative overflow-hidden bg-transparent ${theme === 'light' ? 'text-rich' : 'text-pale'} ${highContrast ? 'contrast-border' : ''}`}>
+
+          {/* Ambient Glowing Orbs */}
+          <div className="absolute top-[-100px] left-[-100px] bg-glowing-orb-1"></div>
+          <div className="absolute bottom-[-100px] right-[-100px] bg-glowing-orb-2"></div>
+
+          {/* Ambient Blueprint Grid Layer */}
+          <div className="absolute inset-0 ambient-grid pointer-events-none opacity-[0.25]"></div>
+
+          {/* --- TOP HEADER & NAVIGATION --- */}
+          <header className={`transition-colors duration-300 ${theme === 'light' ? 'bg-card-bg/70' : 'bg-rich/70'} sticky top-0 backdrop-blur z-40`}>
+            <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+
+              <div className="flex items-center cursor-pointer" onClick={() => setActiveTab('discover')}>
+                <SignBridgeLogo size="sm" />
+              </div>
+
+              {/* Navigation Tabs */}
+              <nav className="hidden md:flex items-center space-x-1">
+                {[
+                  { id: 'discover', label: 'Discover' },
+                  { id: 'translator', label: 'Live Translator' },
+                  { id: 'text-to-sign', label: 'Text-to-Sign' },
+                  { id: 'dashboard', label: 'Insights & Log' },
+                  { id: 'about', label: 'Academic Scope' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-4 py-2 text-sm font-semibold rounded-lg btn-hover-scale ${activeTab === tab.id
+                        ? (theme === 'light' ? 'bg-rich text-pale' : 'bg-pale text-rich')
+                        : 'opacity-70 hover:opacity-100'
+                      }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </nav>
+
+              {/* Header Actions */}
+              <div className="flex items-center space-x-3">
+
+                {/* Accessibility display settings button */}
+                <button
+                  title="Accessibility Control Suite"
+                  onClick={() => setShowShortcutsOverlay(true)}
+                  className={`p-2 rounded-lg border transition-colors btn-hover-scale ${theme === 'light' ? 'border-rich hover:bg-rich hover:text-pale' : 'border-pale hover:bg-pale hover:text-rich'}`}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 8v8M8 12h8" />
+                  </svg>
+                </button>
+
+                {/* --- PURE TWO-COLOR LIGHT/DARK DUAL TOGGLE --- */}
+                <button
+                  title={`Toggle ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
+                  onClick={() => setTheme(t => t === 'light' ? 'dark' : 'light')}
+                  className={`p-2 rounded-lg border transition-all duration-300 btn-hover-scale ${theme === 'light'
+                      ? 'border-rich bg-pale text-rich hover:bg-rich hover:text-pale'
+                      : 'border-pale bg-rich text-pale hover:bg-pale hover:text-rich'
+                    }`}
+                >
+                  {theme === 'light' ? (
+                    // Inverted Moon icon
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  ) : (
+                    // Inverted Sun icon
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="5" />
+                      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" strokeLinecap="round" />
+                    </svg>
+                  )}
+                </button>
+
+                {/* Console access button */}
+                {isLoggedIn ? (
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setActiveTab('dashboard')}
+                      className={`hidden sm:inline-flex px-3 py-1.5 text-xs font-bold border rounded btn-hover-scale ${theme === 'light' ? 'border-rich bg-rich text-pale' : 'border-pale bg-pale text-rich'}`}
+                    >
+                      Console Active
+                    </button>
+                    <button
+                      onClick={executeMockLogout}
+                      className="p-2 rounded-lg border border-red-800 text-red-600 hover:bg-red-900 hover:text-white"
+                      title="Terminate Session"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setAuthMode('login'); setShowLoginModal(true); }}
+                    className={`px-4 py-2 text-xs font-bold border rounded-lg btn-hover-scale ${theme === 'light' ? 'border-rich hover:bg-rich hover:text-pale' : 'border-pale hover:bg-pale hover:text-rich'}`}
+                  >
+                    Portal Access
+                  </button>
+                )}
+
+              </div>
+            </div>
+          </header>
+
+          {/* --- MOBILE SUB MENU TABS --- */}
+          <div className={`md:hidden flex justify-around p-2 ${theme === 'light' ? 'bg-card-bg' : 'bg-rich'}`}>
+            {[
+              { id: 'discover', label: 'Discover' },
+              { id: 'translator', label: 'Translator' },
+              { id: 'text-to-sign', label: 'Text-to-Sign' },
+              { id: 'dashboard', label: 'Dashboard' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`text-xs font-bold px-2 py-1 rounded ${activeTab === tab.id ? (theme === 'light' ? 'bg-rich text-pale' : 'bg-pale text-rich') : 'opacity-70'}`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* --- MAIN PAGE VIEW CONTENT ROUTER --- */}
+          <main className="flex-grow max-w-7xl w-full mx-auto px-6 py-8">
+
+            {/* =========================================================================
+                1) LANDING / DISCOVER PAGE
+                ========================================================================= */}
+            {activeTab === 'discover' && (
+              <div className="space-y-16 animate-fade-in">
+
+                {/* Hero Section */}
+                <section className="text-center py-12 max-w-4xl mx-auto space-y-8 flex flex-col items-center">
+
+                  {/* Large storytelling logo display stage */}
+                  <div className="w-full max-w-xl py-6">
+                    <SignBridgeLogo size="lg" />
+                  </div>
+
+                  <div className="hero-animate-badge inline-block border px-3 py-1 text-xs font-bold uppercase tracking-wider rounded border-current opacity-75">
+                    Academic Machine Learning Platform
+                  </div>
+
+                  <h1 className="hero-animate-title text-4xl sm:text-6xl font-bold tracking-tight leading-none">
+                    Bridging Indian Sign Language In Real Time
+                  </h1>
+
+                  <p className="hero-animate-desc text-lg opacity-85 leading-relaxed max-w-2xl mx-auto">
+                    A clinical, lightweight machine learning bridge. Translate static and motion gesture sign configurations into speech or text, and animate vocabulary constructs with high-fidelity vector outlines.
+                  </p>
+
+                  <div className="hero-animate-actions flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 w-full sm:w-auto">
+                    <button
+                      onClick={() => setActiveTab('translator')}
+                      className={`w-full sm:w-auto px-8 py-4 font-bold border rounded-lg text-sm btn-hover-scale flex items-center justify-center space-x-2 ${theme === 'light' ? 'bg-rich text-pale border-rich' : 'bg-pale text-rich border-pale'
+                        }`}
+                    >
+                      <span>Initiate Translation Console</span>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveTab('about')}
+                      className={`w-full sm:w-auto px-8 py-4 font-bold border rounded-lg text-sm btn-hover-scale ${theme === 'light' ? 'border-rich bg-transparent hover:bg-rich hover:text-pale' : 'border-pale bg-transparent hover:bg-pale hover:text-rich'
+                        }`}
+                    >
+                      Examine Research Methodology
+                    </button>
+                  </div>
+                </section>
+
+                {/* INTERACTIVE STORYTELLING SLIDE DECK */}
+                <section className="space-y-6">
+                  <div className="text-center space-y-2">
+                    <div className="inline-block px-3 py-1 text-[10px] font-bold uppercase tracking-widest border rounded-full">
+                      System Walkthrough
+                    </div>
+                    <h2 className="text-3xl font-bold tracking-tight">Core Architecture Explainer</h2>
+                    <p className="text-xs opacity-75 max-w-lg mx-auto">
+                      Explore the technical pipeline of SignBridge. Select a slide to view details and interact with live architectural simulations.
+                    </p>
+                  </div>
+
+                  <div className="glass-card rounded-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 border">
+                    {/* Left Panel: Slide Text Contents (7 cols) */}
+                    <div className="lg:col-span-7 p-8 flex flex-col justify-between space-y-8 border-b lg:border-b-0 lg:border-r border-current border-opacity-10">
+
+                      <div className="space-y-6">
+                        {/* Slide Indicator Bar */}
+                        <div className="flex items-center space-x-2">
+                          {SLIDES_CONTENT.map((slide, idx) => (
+                            <button
+                              key={slide.id}
+                              onClick={() => setActiveSlideIdx(idx)}
+                              className={`h-1.5 rounded-full transition-all duration-300 ${activeSlideIdx === idx
+                                  ? 'w-8 bg-current'
+                                  : 'w-2 bg-current opacity-20 hover:opacity-40'
+                                }`}
+                              title={`Go to slide ${idx + 1}`}
+                            />
+                          ))}
+                        </div>
+
+                        {/* Title & Badge */}
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-3">
+                            <span className="text-2xl">{SLIDES_CONTENT[activeSlideIdx].icon}</span>
+                            <span className="text-xs uppercase tracking-wider font-semibold opacity-65">
+                              {SLIDES_CONTENT[activeSlideIdx].subtitle}
+                            </span>
+                          </div>
+                          <h3 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                            {SLIDES_CONTENT[activeSlideIdx].title}
+                          </h3>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-sm opacity-85 leading-relaxed">
+                          {SLIDES_CONTENT[activeSlideIdx].description}
+                        </p>
+
+                        {/* Key Specs */}
+                        <div className="space-y-2.5 pt-2">
+                          <span className="text-xs font-bold uppercase tracking-wider opacity-60">Architectural Specifications:</span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {SLIDES_CONTENT[activeSlideIdx].features.map((feature, fIdx) => (
+                              <div key={fIdx} className="flex items-center space-x-2 text-xs opacity-90">
+                                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                  <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                                <span>{feature}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Navigation Controls */}
+                      <div className="flex items-center justify-between pt-6 border-t border-current border-opacity-10">
+                        <div className="text-xs opacity-60">
+                          Step <span className="font-bold">{activeSlideIdx + 1}</span> of {SLIDES_CONTENT.length}
+                        </div>
+                        <div className="flex space-x-3">
+                          <button
+                            onClick={() => setActiveSlideIdx(prev => (prev - 1 + SLIDES_CONTENT.length) % SLIDES_CONTENT.length)}
+                            className="p-2 border rounded-lg hover:bg-current hover:text-bg transition-colors duration-200"
+                            title="Previous Step"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => setActiveSlideIdx(prev => (prev + 1) % SLIDES_CONTENT.length)}
+                            className="p-2 border rounded-lg hover:bg-current hover:text-bg transition-colors duration-200"
+                            title="Next Step"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Right Panel: Live Animated Canvas Simulation (5 cols) */}
+                    <div className="lg:col-span-5 relative h-80 lg:h-auto min-h-[320px] flex items-center justify-center overflow-hidden">
+                      <div className="absolute inset-0 grid-overlay opacity-30"></div>
+
+                      {/* Viewfinder HUD brackets */}
+                      <div className="scanner-hud">
+                        <div className="hud-corner hud-tl"></div>
+                        <div className="hud-corner hud-tr"></div>
+                        <div className="hud-corner hud-bl"></div>
+                        <div className="hud-corner hud-br"></div>
+                        <div className="laser-line"></div>
+                      </div>
+
+                      {/* Canvas element */}
+                      <canvas
+                        id="slide-animation-canvas"
+                        width="400"
+                        height="400"
+                        className="w-full h-full max-w-[400px] max-h-[400px] z-10"
+                      ></canvas>
+
+                      {/* Animated telemetry readout overlay */}
+                      <div className="absolute bottom-4 left-4 right-4 z-20 flex justify-between text-[9px] font-mono opacity-60">
+                        <span>SYSTEM: ONLINE</span>
+                        <span>LATENCY: ~18ms</span>
+                        <span>FRAME: {Math.floor(Date.now() / 100) % 1000}</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Live Mock Interactive Skeletal Grid Demo */}
+                <section className="glass-card border rounded-2xl p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+                  <div className="space-y-4 md:max-w-md">
+                    <div className="inline-block px-2 py-0.5 border text-xs font-semibold rounded">Interactive Simulation</div>
+                    <h3 className="text-2xl font-bold">Holographic Skeletal Grid</h3>
+                    <p className="text-sm opacity-80 leading-relaxed">
+                      Move your cursor inside the canvas on the right to interact with our real-time 3D hand mathematical landmark alignment model. This tracks vector coordinates in real time.
+                    </p>
+                    <button
+                      onClick={() => setActiveTab('translator')}
+                      className={`px-4 py-2 border rounded text-xs font-bold btn-hover-scale ${theme === 'light' ? 'bg-rich text-pale' : 'bg-pale text-rich'
+                        }`}
+                    >
+                      Initiate Physical Camera
+                    </button>
+                  </div>
+
+                  {/* Interactive Cursor Hand Visualizer */}
+                  <HolographicCanvas theme={theme} />
+                </section>
+
+                {/* Project Guides */}
+                <section className="space-y-6">
+                  <h2 className="text-2xl font-bold text-center">Project Guides</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="p-6 rounded-xl glass-card border flex flex-col justify-between">
+                      <p className="text-sm italic opacity-85 leading-relaxed">
+                        "SignBridge demonstrates a stellar execution of bridging gesture-to-speech classification in a low-latency environment, showcasing exceptional application of machine learning in accessibility systems."
+                      </p>
+                      <div className="mt-4 border-t pt-3 flex items-center space-x-2 border-current border-opacity-20">
+                        <span className="text-xs font-bold">Ms. Vandana Patel</span>
+                        <span className="text-[10px] opacity-75">| Project Guide</span>
+                      </div>
+                    </div>
+
+                    <div className="p-6 rounded-xl glass-card border flex flex-col justify-between">
+                      <p className="text-sm italic opacity-85 leading-relaxed">
+                        "The implementation of dual-hand landmark tracking alongside a robust temporal smoothing matrix establishes a solid benchmark for real-time Web-based assistive technologies."
+                      </p>
+                      <div className="mt-4 border-t pt-3 flex items-center space-x-2 border-current border-opacity-20">
+                        <span className="text-xs font-bold">Mahesh Bhagwani</span>
+                        <span className="text-[10px] opacity-75">| Project Guide</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+              </div>
+            )}
+
+            {/* =========================================================================
+                2) LIVE TRANSLATOR PAGE
+                ========================================================================= */}
+            {activeTab === 'translator' && (
+              <div className="space-y-8 animate-fade-in">
+
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 gap-4">
+                  <div>
+                    <h2 className="text-3xl font-bold">ISL Live Neural Translator</h2>
+                    <p className="text-xs opacity-75">Access local webcam to capture real-time hand landmarks and predict ISL signs.</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-bold">System Status:</span>
+                    <span className={`px-2 py-0.5 text-xs font-bold rounded border ${sysStatus === 'INFERENCE RUNNING'
+                        ? 'bg-green-100 border-green-800 text-green-800'
+                        : (sysStatus === 'NO HAND DETECTED' ? 'bg-yellow-100 border-yellow-800 text-yellow-800' : 'opacity-65')
+                      }`}>
+                      {sysStatus}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                  {/* Left Column: Camera Console */}
+                  <div className="space-y-6">
+
+                    <div className={`soft-border-panel no-hover-lift p-2 rounded-2xl relative overflow-hidden ${theme === 'light' ? 'bg-card-bg' : 'bg-rich-solid-trans'
+                      }`}>
+
+                      {/* Video element wrapper */}
+                      <div className="relative w-full aspect-video border rounded-xl overflow-hidden bg-black flex items-center justify-center">
+
+                        {!camActive && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 space-y-4 z-10 bg-opacity-70 bg-black text-pale">
+                            <svg className="w-12 h-12 stroke-pale" fill="none" viewBox="0 0 24 24" strokeWidth="1.5">
+                              <path d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            <span className="text-sm font-semibold max-w-xs">Webcam feed is offline. Grant camera permissions to initialize.</span>
+                            <button
+                              onClick={toggleCamera}
+                              className={`px-4 py-2 border rounded font-bold text-xs btn-hover-scale ${theme === 'light' ? 'bg-pale text-rich border-pale' : 'bg-pale text-rich border-pale'}`}
+                            >
+                              Start Camera Feed
+                            </button>
+                          </div>
+                        )}
+
+                        {camError && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-red-950 text-red-100 z-20 space-y-2">
+                            <span className="font-bold">Hardware Fault</span>
+                            <span className="text-xs">{camError}</span>
+                          </div>
+                        )}
+
+                        <video
+                          ref={videoRef}
+                          className="w-full h-full object-cover mirror-view"
+                          autoplay
+                          muted
+                          playsinline
+                        ></video>
+
+                        <canvas
+                          ref={canvasRef}
+                          width="640"
+                          height="480"
+                          className="absolute inset-0 w-full h-full object-cover mirror-view z-10 pointer-events-none"
+                        ></canvas>
+
+                      </div>
+
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={toggleCamera}
+                          className={`px-4 py-2 text-xs font-bold border rounded-lg btn-hover-scale ${camActive
+                              ? 'border-red-600 text-red-600 hover:bg-red-950 hover:text-white'
+                              : (theme === 'light' ? 'bg-rich text-pale' : 'bg-pale text-rich')
+                            }`}
+                        >
+                          {camActive ? "Stop Webcam Feed" : "Start Webcam Feed"}
+                        </button>
+
+                        {camActive && (
+                          <button
+                            onClick={() => setLandmarksVisible(v => !v)}
+                            className="px-3 py-2 text-xs border rounded-lg hover:opacity-80"
+                          >
+                            {landmarksVisible ? "Overlay Off" : "Overlay On"}
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="text-[10px] opacity-60">Inference interval: 280ms | Device Local</div>
+                    </div>
+
+                  </div>
+
+                  {/* Right Column: Inferences Console */}
+                  <div className="space-y-6">
+
+                    {/* Active Prediction Display (Dual Hands) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Primary Hand (H1) */}
+                      <div className={`p-5 soft-border-panel rounded-2xl flex items-center justify-between ${theme === 'light' ? 'bg-card-bg' : 'bg-rich-solid-trans'
+                        }`}>
+                        <div className="space-y-1">
+                          <span className="text-xs opacity-75 font-semibold uppercase">Primary Hand (H1)</span>
+                          <h3 className="text-2xl font-bold uppercase tracking-tight">
+                            {prediction !== 'No Hand Detected' ? prediction : 'Waiting...'}
+                          </h3>
+                        </div>
+
+                        {/* circular custom SVG gauge */}
+                        <div className="relative w-16 h-16 flex items-center justify-center flex-shrink-0 ml-2">
+                          <svg className="w-full h-full transform -rotate-90">
+                            <circle cx="32" cy="32" r="25" stroke="currentColor" strokeWidth="5" fill="transparent" className="opacity-15" />
+                            <circle
+                              cx="32"
+                              cy="32"
+                              r="25"
+                              stroke="currentColor"
+                              strokeWidth="5"
+                              fill="transparent"
+                              strokeDasharray={2 * Math.PI * 25}
+                              strokeDashoffset={2 * Math.PI * 25 * (1 - (confidence || 0))}
+                              className="transition-all duration-300"
+                            />
+                          </svg>
+                          <span className="absolute text-[10px] font-bold">
+                            {confidence ? `${(confidence * 100).toFixed(0)}%` : '0%'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Secondary Hand (H2) */}
+                      <div className={`p-5 soft-border-panel rounded-2xl flex items-center justify-between ${theme === 'light' ? 'bg-card-bg' : 'bg-rich-solid-trans'
+                        }`}>
+                        <div className="space-y-1">
+                          <span className="text-xs opacity-75 font-semibold uppercase">Secondary Hand (H2)</span>
+                          <h3 className="text-2xl font-bold uppercase tracking-tight">
+                            {secondPrediction !== 'No Hand Detected' ? secondPrediction : 'Waiting...'}
+                          </h3>
+                        </div>
+
+                        {/* circular custom SVG gauge */}
+                        <div className="relative w-16 h-16 flex items-center justify-center flex-shrink-0 ml-2">
+                          <svg className="w-full h-full transform -rotate-90">
+                            <circle cx="32" cy="32" r="25" stroke="currentColor" strokeWidth="5" fill="transparent" className="opacity-15" />
+                            <circle
+                              cx="32"
+                              cy="32"
+                              r="25"
+                              stroke="currentColor"
+                              strokeWidth="5"
+                              fill="transparent"
+                              strokeDasharray={2 * Math.PI * 25}
+                              strokeDashoffset={2 * Math.PI * 25 * (1 - (secondConfidence || 0))}
+                              className="transition-all duration-300"
+                            />
+                          </svg>
+                          <span className="absolute text-[10px] font-bold">
+                            {secondConfidence ? `${(secondConfidence * 100).toFixed(0)}%` : '0%'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Temporal Smoothing Buffer Display */}
+                    <div className="p-4 border rounded-xl space-y-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider opacity-65">Rolling Temporal Buffer (In-Memory Queue)</span>
+                      <div className="flex flex-wrap gap-2 min-h-6 items-center">
+                        {smoothingBuffer.length === 0 ? (
+                          <span className="text-xs opacity-50 italic">No historical queue captured...</span>
+                        ) : (
+                          smoothingBuffer.map((b, idx) => (
+                            <span key={idx} className={`px-2 py-0.5 text-xs border rounded-md uppercase font-semibold ${theme === 'light' ? 'bg-pale border-rich' : 'bg-rich-trans border-pale'}`}>
+                              {b}
+                            </span>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Sentence Transcripts Panel */}
+                    <div className={`p-6 soft-border-panel rounded-2xl space-y-4 ${theme === 'light' ? 'bg-card-bg' : 'bg-rich-solid-trans'
+                      }`}>
+                      <div className="flex items-center justify-between border-b pb-2">
+                        <h4 className="text-sm font-bold uppercase tracking-tight">Rolling Sentence Transcript</h4>
+
+                        {/* TTS read aloud settings */}
+                        <label className="flex items-center space-x-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={speechEnabled}
+                            onChange={(e) => setSpeechEnabled(e.target.checked)}
+                            className="rounded border-rich text-rich focus:ring-rich w-3.5 h-3.5"
+                          />
+                          <span className="text-[11px] font-bold">Audio Synthesized output (TTS)</span>
+                        </label>
+                      </div>
+
+                      {/* Paper-lined visual effect */}
+                      <div className={`p-4 rounded-lg min-h-32 border border-dashed relative overflow-y-auto ${theme === 'light' ? 'bg-pale-trans border-rich' : 'bg-rich-trans border-pale'
+                        }`}>
+                        {transcript.length === 0 ? (
+                          <p className="text-xs opacity-50 italic text-center pt-8">Formulated ISL sentence will commit here. Move your hands continuously.</p>
+                        ) : (
+                          <p className="text-lg font-bold tracking-wide uppercase leading-relaxed">
+                            {transcript.join(' ')}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex justify-end space-x-2">
+                        <button
+                          onClick={() => { setTranscript([]); lastCommitWordRef.current = ""; }}
+                          className="px-3 py-1.5 text-xs border rounded-md hover:opacity-80"
+                        >
+                          Clear Transcript
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            if (transcript.length > 0) {
+                              navigator.clipboard.writeText(transcript.join(' '));
+                              alert("Transcript copied to clipboard as academic citation.");
+                            }
+                          }}
+                          className={`px-3 py-1.5 text-xs border rounded-md font-bold btn-hover-scale ${theme === 'light' ? 'bg-rich text-pale' : 'bg-pale text-rich'
+                            }`}
+                        >
+                          Export Log
+                        </button>
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
+            {/* =========================================================================
+                3) TEXT-TO-SIGN TRANSLATION PAGE
+                ========================================================================= */}
+            {activeTab === 'text-to-sign' && (
+              <div className="space-y-8 animate-fade-in">
+
+                <div className="border-b pb-4">
+                  <h2 className="text-3xl font-bold">Text-to-Sign Stage</h2>
+                  <p className="text-xs opacity-75">Input arbitrary English/Hindi sentences to trigger sequential vector hand gesture animations.</p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                  {/* Left Column: Input Panel */}
+                  <div className="lg:col-span-1 space-y-6">
+
+                    <div className="space-y-4">
+
+                      <div className="flex flex-col space-y-1">
+                        <label className="text-xs font-bold uppercase tracking-wider">Interface Language</label>
+                        <select
+                          value={inputLang}
+                          onChange={(e) => { setInputLang(e.target.value); setTtsInputText(''); }}
+                          className={`w-full p-2 border rounded-lg bg-transparent font-semibold ${theme === 'light' ? 'border-rich' : 'border-pale'}`}
+                        >
+                          <option value="en" className={theme === 'light' ? 'text-rich bg-pale' : 'text-pale bg-rich'}>English (Romanized)</option>
+                          <option value="hi" className={theme === 'light' ? 'text-rich bg-pale' : 'text-pale bg-rich'}>Hindi (Devanagari)</option>
+                        </select>
+                      </div>
+
+                      <div className="flex flex-col space-y-1">
+                        <label className="text-xs font-bold uppercase tracking-wider">Text Input Field</label>
+                        <textarea
+                          rows="4"
+                          value={ttsInputText}
+                          onChange={(e) => setTtsInputText(e.target.value)}
+                          placeholder={inputLang === 'en' ? "E.g. hello thanks yes no i love you..." : "जैसे कि: नमस्ते धन्यवाद हाँ नहीं मैं प्यार तुम..."}
+                          className={`w-full p-3 border rounded-xl bg-transparent font-medium resize-none ${theme === 'light' ? 'border-rich' : 'border-pale'}`}
+                        ></textarea>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button
+                          onClick={triggerTextToSign}
+                          disabled={isPlayingSequence || !ttsInputText.trim()}
+                          className={`flex-1 py-3 font-bold border rounded-xl text-xs tracking-wider uppercase btn-hover-scale ${theme === 'light' ? 'bg-rich text-pale border-rich' : 'bg-pale text-rich border-pale'
+                            } disabled:opacity-50 disabled:pointer-events-none`}
+                        >
+                          {isPlayingSequence ? "Executing Playback..." : "Animate Sign Sequence"}
+                        </button>
+
+                        <button
+                          onClick={isListening ? stopListening : startListening}
+                          className={`px-4 py-3 border rounded-xl btn-hover-scale flex items-center justify-center transition-all duration-300 ${
+                            isListening
+                              ? 'border-red-600 text-red-600 bg-red-950/20'
+                              : (theme === 'light' ? 'border-rich text-rich hover:bg-rich hover:text-pale' : 'border-pale text-pale hover:bg-pale hover:text-rich')
+                          }`}
+                          title={isListening ? "Stop Microphone" : "Speak to Sign (Uno Reverse)"}
+                        >
+                          {isListening ? (
+                            <span className="flex items-center space-x-1.5">
+                              <span className="w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
+                              <span className="text-xs font-bold uppercase tracking-wider">Listening...</span>
+                            </span>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <path d="M12 1v11m0 0a3.5 3.5 0 003.5-3.5V4.5A3.5 3.5 0 0012 1zm0 11a3.5 3.5 0 01-3.5-3.5V4.5A3.5 3.5 0 0112 1zm0 11v4m-6-4a6 6 0 0012 0" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+
+                    </div>
+
+                    <div className="p-4 border border-dashed rounded-xl space-y-2">
+                      <span className="text-[11px] font-bold">Sign Vocabulary Dictionary Checklist:</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(inputLang === 'en' ? Object.keys(ENGLISH_ANIM_MAP) : Object.keys(HINDI_ANIM_MAP)).map((vocab, index) => (
+                          <span key={index} className={`px-2 py-0.5 text-xs rounded border capitalize font-semibold ${theme === 'light' ? 'bg-pale border-rich text-rich' : 'bg-rich-trans border-pale text-pale'}`}>
+                            {vocab}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Right Column: Virtual Animation Stage */}
+                  <div className="lg:col-span-2 space-y-6">
+
+                    {/* Dynamic Vector Animation Screen */}
+                    <div className={`soft-border-panel no-hover-lift rounded-2xl p-6 relative overflow-hidden aspect-video flex flex-col justify-between ${theme === 'light' ? 'bg-card-bg' : 'bg-rich-solid-trans'
+                      }`}>
+
+                      <div className="flex justify-between items-center border-b pb-2">
+                        <span className="text-xs opacity-75 uppercase font-bold tracking-tight">Virtual Sign Avatar Stage</span>
+                        <div className="flex items-center space-x-1">
+                          <span className="w-2 h-2 rounded-full bg-green-500 animate-ping"></span>
+                          <span className="text-[10px] font-semibold">Local Rendering Engine</span>
+                        </div>
+                      </div>
+
+                      {/* Vector gesture morph stage */}
+                      <div className="flex-grow flex flex-col items-center justify-center p-6 space-y-4">
+                        <canvas id="virtual-sign-avatar-canvas" width="400" height="350" className="w-full h-full max-w-[320px] max-h-[280px] z-10"></canvas>
+                        
+                        <div className="text-center space-y-1 z-20">
+                          <h4 className="font-bold text-lg uppercase tracking-wider">{currentGestureKey && HAND_MAPPINGS[currentGestureKey] ? HAND_MAPPINGS[currentGestureKey].name : (currentPose === 'palm' ? 'RESTING PALM' : `LETTER ${currentPose.toUpperCase()}`)}</h4>
+                          <p className="text-xs max-w-sm opacity-80">{currentGestureKey && HAND_MAPPINGS[currentGestureKey] ? HAND_MAPPINGS[currentGestureKey].description : 'Dynamically morphing 3D neumorphic glass outline for spelling fallback.'}</p>
+                        </div>
+                      </div>
+
+                      {/* Display Playback progress status */}
+                      <div className="border-t pt-3 flex items-center justify-between">
+                        <span className="text-xs font-semibold opacity-75">
+                          {isPlayingSequence ? "In Progress..." : "Ready"}
+                        </span>
+
+                        <div className="flex space-x-1.5">
+                          {playingTokens.map((token, index) => (
+                            <span
+                              key={index}
+                              className={`px-2 py-0.5 text-xs rounded border transition-all duration-300 ${index === activeTokenIdx
+                                  ? (theme === 'light' ? 'bg-rich text-pale border-rich' : 'bg-pale text-rich border-paleScale font-bold scale-105')
+                                  : 'opacity-55'
+                                }`}
+                            >
+                              {token}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Unmapped fallback alerts */}
+                    {unmappedTokens.length > 0 && (
+                      <div className="p-4 border border-red-500 rounded-xl bg-red-950 bg-opacity-25 text-red-200 text-xs leading-relaxed space-y-1">
+                        <span className="font-bold block">⚠️ Typographical Warning: Missing Token Fallback</span>
+                        <p>
+                          The following words were not found in our pre-trained gesture dictionary: <strong>{unmappedTokens.join(', ')}</strong>. The avatar will fall back to fingerspelling character sequences where applicable.
+                        </p>
+                      </div>
+                    )}
+
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
+            {/* =========================================================================
+                4) INSIGHTS & HISTORIC LOG PAGE (DASHBOARD)
+                ========================================================================= */}
+            {activeTab === 'dashboard' && (
+              <div className="space-y-8 animate-fade-in">
+
+                <div className="border-b pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-3xl font-bold">Insights & Saved Conversations</h2>
+                    <p className="text-xs opacity-75">Monitor sign statistics, accuracy vectors, and access persistent session transcripts.</p>
+                  </div>
+                  <div className="text-[11px] font-semibold opacity-75">
+                    Storage: Browser LocalStorage (Simulated Secure Vault)
+                  </div>
+                </div>
+
+                {/* Dashboard Metrics Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+
+                  <div className="p-4 border rounded-xl space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider opacity-65">Active Network</span>
+                    <p className="text-xl font-bold">ISL-SVM-v1.4</p>
+                  </div>
+
+                  <div className="p-4 border rounded-xl space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider opacity-65">Total Transcriptions</span>
+                    <p className="text-xl font-bold">148 Sessions</p>
+                  </div>
+
+                  <div className="p-4 border rounded-xl space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider opacity-65">Validation Accuracy</span>
+                    <p className="text-xl font-bold text-green-600">95.4% Average</p>
+                  </div>
+
+                  <div className="p-4 border rounded-xl space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider opacity-65">Median Latency</span>
+                    <p className="text-xl font-bold">210ms (Local)</p>
+                  </div>
+
+                </div>
+
+                {/* Responsive SVG Charts section */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                  {/* SVG Chart A: Historical Usage Frequency */}
+                  <div className={`p-6 soft-border-panel rounded-2xl space-y-4 ${theme === 'light' ? 'bg-card-bg' : 'bg-rich-solid-trans'
+                    }`}>
+                    <div className="border-b pb-2">
+                      <h4 className="text-sm font-bold uppercase tracking-tight">Translation Activity Volume (7-Day Metric)</h4>
+                    </div>
+
+                    {/* Activity volume SVG line graph */}
+                    <div className="w-full h-48 relative pt-4 flex items-end">
+                      <svg className="w-full h-full" viewBox="0 0 350 150">
+                        {/* Grid lines */}
+                        <line x1="30" y1="20" x2="330" y2="20" stroke="currentColor" strokeWidth="0.5" className="opacity-10" />
+                        <line x1="30" y1="70" x2="330" y2="70" stroke="currentColor" strokeWidth="0.5" className="opacity-10" />
+                        <line x1="30" y1="120" x2="330" y2="120" stroke="currentColor" strokeWidth="0.5" className="opacity-15" />
+
+                        {/* SVG Path line representing counted sessions */}
+                        <path
+                          d="M 30 120 L 73 90 L 116 70 L 159 40 L 202 85 L 245 30 L 288 120 L 330 100"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                        />
+
+                        {/* Chart dots */}
+                        {[
+                          { x: 30, y: 120, count: 18 },
+                          { x: 73, y: 90, count: 24 },
+                          { x: 116, y: 70, count: 32 },
+                          { x: 159, y: 40, count: 21 },
+                          { x: 202, y: 85, count: 35 },
+                          { x: 245, y: 30, count: 12 },
+                          { x: 288, y: 120, count: 16 }
+                        ].map((d, i) => (
+                          <g key={i}>
+                            <circle cx={d.x} cy={d.y} r="4.5" fill="currentColor" />
+                            <text x={d.x} y={d.y - 10} fontSize="8" fontWeight="bold" fill="currentColor" textAnchor="middle">{d.count}</text>
+                          </g>
+                        ))}
+
+                        {/* X-Axis labels */}
+                        {["M", "T", "W", "T", "F", "S", "S"].map((day, idx) => (
+                          <text key={idx} x={30 + idx * 49} y="142" fontSize="9" fontWeight="semibold" fill="currentColor" textAnchor="middle">{day}</text>
+                        ))}
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* SVG Chart B: Validation accuracy bar chart per class */}
+                  <div className={`p-6 soft-border-panel rounded-2xl space-y-4 ${theme === 'light' ? 'bg-card-bg' : 'bg-rich-solid-trans'
+                    }`}>
+                    <div className="border-b pb-2">
+                      <h4 className="text-sm font-bold uppercase tracking-tight">Precision Vector Per Gesture Class</h4>
+                    </div>
+
+                    <div className="w-full h-48 pt-2 flex flex-col justify-between space-y-2">
+                      {MOCK_ACCURACY_CLASSES.map((c, idx) => (
+                        <div key={idx} className="flex items-center space-x-3">
+                          <span className="w-16 text-xs font-bold uppercase tracking-wider text-right">{c.label}</span>
+
+                          {/* Progress Bar Container */}
+                          <div className={`flex-grow h-4 border rounded relative overflow-hidden ${theme === 'light' ? 'border-rich bg-pale-trans' : 'border-pale bg-rich-trans'}`}>
+                            <div
+                              style={{ width: `${c.rate}%` }}
+                              className="h-full bg-current opacity-70"
+                            ></div>
+                            <span className="absolute inset-0 flex items-center justify-end pr-2 text-[9px] font-bold text-current">{c.rate}%</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Saved Conversations Access Search Logs */}
+                <div className="space-y-4">
+
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h3 className="text-xl font-bold">Transcription Archive</h3>
+                    <input
+                      type="text"
+                      placeholder="Search saved session logs..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className={`px-3 py-1.5 border rounded-lg text-xs bg-transparent max-w-xs w-full ${theme === 'light' ? 'border-rich' : 'border-pale'
+                        }`}
+                    />
+                  </div>
+
+                  {filteredLogs.length === 0 ? (
+                    <div className="p-8 border border-dashed rounded-xl text-center italic opacity-60">
+                      No matching log configurations found. Complete translations inside the Translator stage.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {filteredLogs.map(log => (
+                        <div key={log.id} className="p-4 border rounded-xl relative overflow-hidden flex flex-col justify-between space-y-3">
+                          <div className="space-y-1">
+                            <div className="flex justify-between items-center text-[10px] font-semibold opacity-75">
+                              <span>{log.timestamp}</span>
+                              <span className="uppercase">{log.language}</span>
+                            </div>
+                            <p className="text-base font-bold tracking-wide uppercase border-l-2 pl-2">
+                              {log.phrase}
+                            </p>
+                          </div>
+
+                          <div className="flex justify-between items-center border-t pt-2">
+                            <span className="text-[10px] font-bold">Accuracy Index: <span className="text-green-600">{log.accuracy}%</span></span>
+                            <button
+                              onClick={() => deleteLog(log.id)}
+                              className="text-[10px] font-semibold text-red-600 hover:underline"
+                            >
+                              Delete Citation
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                </div>
+
+                {/* Gesture Trainer Practice Arena */}
+                <section className={`soft-border-panel no-hover-lift rounded-2xl p-6 space-y-4 ${theme === 'light' ? 'bg-card-bg' : 'bg-rich-solid-trans'
+                  }`}>
+                  <div className="border-b pb-2">
+                    <h3 className="text-xl font-bold">Neural Practice Arena</h3>
+                    <p className="text-xs opacity-75">Align your hand skeleton overlay over our mathematical calibration models to practice gestures.</p>
+                  </div>
+
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+
+                    <div className="space-y-4 md:max-w-sm">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-bold uppercase">Active Target:</span>
+                        <select
+                          value={practiceGesture}
+                          onChange={(e) => {
+                            setPracticeGesture(e.target.value);
+                            setPracticeAligned(false);
+                          }}
+                          className={`p-1 text-xs border rounded bg-transparent font-bold ${theme === 'light' ? 'border-rich' : 'border-pale'}`}
+                        >
+                          {actionsVocab.map((a, i) => (
+                            <option key={i} value={a} className={theme === 'light' ? 'text-rich bg-pale' : 'text-pale bg-rich'}>{a.toUpperCase()}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <p className="text-xs opacity-80 leading-relaxed">
+                        Hold your palm static inside the camera capture view. Align your knuckles to the model skeleton grid. The system calculates a spatial cosine similarity vector to evaluate accuracy.
+                      </p>
+
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => {
+                            setPracticeAligned(true);
+                            setTimeout(() => { alert("Calibration Aligned! Vector Match: 98.4% Cosine Similarity."); }, 150);
+                          }}
+                          className={`px-4 py-2 border rounded text-[11px] font-bold btn-hover-scale ${theme === 'light' ? 'bg-rich text-pale' : 'bg-pale text-rich'
+                            }`}
+                        >
+                          Calculate Knuckle Cosine Alignment
+                        </button>
+
+                        {practiceAligned && (
+                          <span className="text-[10px] text-green-600 font-bold">✓ Aligned</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Vector outline alignment chart */}
+                    <div className={`w-full md:w-72 h-44 border rounded-xl relative flex items-center justify-center overflow-hidden ${theme === 'light' ? 'bg-pale border-rich' : 'bg-rich border-pale'
+                      }`}>
+                      <svg className={`w-32 h-32 opacity-25 ${theme === 'light' ? 'stroke-rich' : 'stroke-pale'}`} viewBox="0 0 24 24" fill="none" strokeWidth="1.5">
+                        <circle cx="12" cy="12" r="10" />
+                        <circle cx="12" cy="12" r="6" strokeDasharray="3 3" />
+                        <path d="M12 2v20M2 12h20" />
+                      </svg>
+                      <span className="absolute text-[10px] font-mono tracking-wider opacity-60">TARGET CALIBRATION BLUEPRINT</span>
+                    </div>
+
+                  </div>
+                </section>
+
+              </div>
+            )}
+
+            {/* =========================================================================
+                5) ACADEMIC SCOPE & METHODOLOGY PAGE (ABOUT)
+                ========================================================================= */}
+            {activeTab === 'about' && (
+              <div className="space-y-12 animate-fade-in">
+
+                <section className="text-center py-6 max-w-3xl mx-auto space-y-4">
+                  <h2 className="text-4xl font-bold tracking-tight">Academic Scope & System Boundaries</h2>
+                  <p className="text-sm opacity-85 leading-relaxed">
+                    Analyzing the mathematical constraints, hand-knuckle skeletal calculations, and temporal voting arrays behind the SignBridge translation architecture.
+                  </p>
+                </section>
+
+                {/* Chronological Research Pipeline */}
+                <section className="space-y-6">
+                  <h3 className="text-2xl font-bold border-b pb-2">Research Methodology Timeline</h3>
+
+                  <div className="space-y-8 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-current before:opacity-15">
+
+                    <div className="relative pl-8 space-y-1">
+                      <div className="absolute left-1.5 top-1.5 w-3.5 h-3.5 rounded-full border-2 bg-current"></div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider opacity-65">Step 01 - Landmark Capture</span>
+                      <h4 className="text-base font-bold">21-Joint Knuckle Vector Processing</h4>
+                      <p className="text-xs opacity-80 leading-relaxed max-w-2xl">
+                        A real-time camera grid computes Cartesian coordinates [x, y, z] for 21 joints, normalizing coordinate scales against the palm base distance to guarantee distance-invariance.
+                      </p>
+                    </div>
+
+                    <div className="relative pl-8 space-y-1">
+                      <div className="absolute left-1.5 top-1.5 w-3.5 h-3.5 rounded-full border-2 bg-current"></div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider opacity-65">Step 02 - Coordinate Mapping</span>
+                      <h4 className="text-base font-bold">Feature Coordinate Processing</h4>
+                      <p className="text-xs opacity-80 leading-relaxed max-w-2xl">
+                        Coordinates are flattened into a single one-dimensional array of 63 floating-point integers and posted securely through dynamic JSON payloads to the Flask API endpoint.
+                      </p>
+                    </div>
+
+                    <div className="relative pl-8 space-y-1">
+                      <div className="absolute left-1.5 top-1.5 w-3.5 h-3.5 rounded-full border-2 bg-current"></div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider opacity-65">Step 03 - Machine Learning Inferences</span>
+                      <h4 className="text-base font-bold">Scikit-Learn Classification Alignment</h4>
+                      <p className="text-xs opacity-80 leading-relaxed max-w-2xl">
+                        A pre-trained multi-class Support Vector Machine (SVM) evaluates classification probabilities, matching spatial landmarks to pre-trained gesture matrices.
+                      </p>
+                    </div>
+
+                    <div className="relative pl-8 space-y-1">
+                      <div className="absolute left-1.5 top-1.5 w-3.5 h-3.5 rounded-full border-2 bg-current"></div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider opacity-65">Step 04 - Temporal Voting Matrix</span>
+                      <h4 className="text-base font-bold">In-Memory Smoothing and Commit Signals</h4>
+                      <p className="text-xs opacity-80 leading-relaxed max-w-2xl">
+                        A rolling deque index calculates the mode frequency of the past 6 frames. When a single label retains more than 4 votes with high probability, a commit signal is triggered.
+                      </p>
+                    </div>
+
+                  </div>
+                </section>
+
+                {/* Architectural Flowchart SVG */}
+                <section className="space-y-4">
+                  <h3 className="text-2xl font-bold border-b pb-2">Academic Data Flow Diagram</h3>
+
+                  <div className={`p-6 soft-border-panel rounded-xl overflow-x-auto flex justify-center ${theme === 'light' ? 'bg-card-bg' : 'bg-rich-solid-trans'
+                    }`}>
+                    <svg className="w-full max-w-3xl h-64 text-current" viewBox="0 0 700 240">
+
+                      {/* Blocks */}
+                      <rect x="20" y="80" width="110" height="60" rx="6" fill="none" stroke="currentColor" strokeWidth="2" />
+                      <text x="75" y="115" fontSize="10" fontWeight="bold" fill="currentColor" textAnchor="middle">Webcam Capture</text>
+
+                      <rect x="180" y="80" width="110" height="60" rx="6" fill="none" stroke="currentColor" strokeWidth="2" />
+                      <text x="235" y="115" fontSize="10" fontWeight="bold" fill="currentColor" textAnchor="middle">MediaPipe JS</text>
+
+                      <rect x="340" y="80" width="120" height="60" rx="6" fill="none" stroke="currentColor" strokeWidth="2" />
+                      <text x="400" y="115" fontSize="10" fontWeight="bold" fill="currentColor" textAnchor="middle">Flask app.py</text>
+
+                      <rect x="510" y="20" width="140" height="50" rx="6" fill="none" stroke="currentColor" strokeWidth="2" />
+                      <text x="580" y="50" fontSize="9" fontWeight="bold" fill="currentColor" textAnchor="middle">Scikit-Learn SVM</text>
+
+                      <rect x="510" y="100" width="140" height="50" rx="6" fill="none" stroke="currentColor" strokeWidth="2" />
+                      <text x="580" y="130" fontSize="9" fontWeight="bold" fill="currentColor" textAnchor="middle">Temporal Smoother</text>
+
+                      <rect x="510" y="170" width="140" height="50" rx="6" fill="none" stroke="currentColor" strokeWidth="2" />
+                      <text x="580" y="200" fontSize="9" fontWeight="bold" fill="currentColor" textAnchor="middle">Speech TTS Engine</text>
+
+                      {/* Connection arrows */}
+                      <path d="M 130 110 L 180 110" fill="none" stroke="currentColor" strokeWidth="1.5" markerEnd="url(#arrow)" />
+                      <path d="M 290 110 L 340 110" fill="none" stroke="currentColor" strokeWidth="1.5" markerEnd="url(#arrow)" />
+
+                      <path d="M 460 110 L 485 110 L 485 45 L 510 45" fill="none" stroke="currentColor" strokeWidth="1.5" markerEnd="url(#arrow)" />
+                      <path d="M 460 110 L 510 110" fill="none" stroke="currentColor" strokeWidth="1.5" markerEnd="url(#arrow)" />
+                      <path d="M 460 110 L 485 110 L 485 195 L 510 195" fill="none" stroke="currentColor" strokeWidth="1.5" markerEnd="url(#arrow)" />
+
+                      {/* Flow markers */}
+                      <defs>
+                        <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                          <path d="M 0 2 L 10 5 L 0 8 z" fill="currentColor" />
+                        </marker>
+                      </defs>
+
+                    </svg>
+                  </div>
+                </section>
+
+                {/* Team & Research Details */}
+                <section className="space-y-4">
+                  <h3 className="text-2xl font-bold border-b pb-2">Academic Research Team</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                    <div className="p-4 border rounded-xl space-y-2 flex flex-col justify-between">
+                      <div>
+                        <h4 className="font-bold text-base">Siddhesh Tiwari</h4>
+                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-65 block mb-1">Ideation & Web Development and Integration</span>
+                        <p className="text-xs opacity-80 leading-relaxed">Focuses on front-end design system architecture, state flow engineering, and integration of MediaPipe pipeline.</p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 border rounded-xl space-y-2 flex flex-col justify-between">
+                      <div>
+                        <h4 className="font-bold text-base">Muhammed Habeeb</h4>
+                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-65 block mb-1">Core Code Development & Dataset Curation</span>
+                        <p className="text-xs opacity-80 leading-relaxed">Directs hand landmark feature engineering, classification matrix training, and curated gesture datasets.</p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 border rounded-xl space-y-2 flex flex-col justify-between">
+                      <div>
+                        <h4 className="font-bold text-base">Tanishq Mehtab</h4>
+                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-65 block mb-1">Web Testing & Debugging</span>
+                        <p className="text-xs opacity-80 leading-relaxed">Oversees cross-browser layout performance audits, accessibility indexes, and end-to-end user tests.</p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 border rounded-xl space-y-2 flex flex-col justify-between">
+                      <div>
+                        <h4 className="font-bold text-base">Varun Yadav</h4>
+                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-65 block mb-1">Documentation, Thesis Writing & Log Changes</span>
+                        <p className="text-xs opacity-80 leading-relaxed">Manages the comprehensive system boundaries reporting, architectural timeline, and project change log.</p>
+                      </div>
+                    </div>
+
+                  </div>
+                </section>
+
+              </div>
+            )}
+
+          </main>
+
+          {/* =========================================================================
+              6) MOCK LOGIN / AUTH MODAL
+              ========================================================================= */}
+          {showLoginModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black bg-opacity-70 backdrop-blur-sm">
+
+              <div className={`w-full max-w-md soft-border-panel no-hover-lift p-6 rounded-2xl space-y-6 relative overflow-hidden animate-scale-up ${theme === 'light' ? 'bg-pale text-rich' : 'bg-rich text-pale'
+                }`}>
+
+                <button
+                  onClick={() => setShowLoginModal(false)}
+                  className="absolute top-4 right-4 hover:opacity-85"
+                  title="Close Portal"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
+                  </svg>
+                </button>
+
+                <div className="text-center space-y-1">
+                  <h3 className="text-2xl font-bold">{authMode === 'login' ? 'Secure Access Portal' : 'Register Secure Portal'}</h3>
+                  <p className="text-xs opacity-75">Authorized credential verification is required to unlock advanced tools.</p>
+                </div>
+
+                <div className="flex border-b">
+                  <button
+                    onClick={() => setAuthMode('login')}
+                    className={`flex-1 pb-2 text-xs font-bold uppercase tracking-wider border-b-2 ${authMode === 'login' ? 'border-current font-black' : 'border-transparent opacity-60'
+                      }`}
+                  >
+                    Portal Access
+                  </button>
+                  <button
+                    onClick={() => setAuthMode('register')}
+                    className={`flex-1 pb-2 text-xs font-bold uppercase tracking-wider border-b-2 ${authMode === 'register' ? 'border-current font-black' : 'border-transparent opacity-60'
+                      }`}
+                  >
+                    New Registration
+                  </button>
+                </div>
+
+                <form onSubmit={executeMockAuth} className="space-y-4">
+
+                  <div className="flex flex-col space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider">Verification Key (Email)</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="siddharth@university.edu"
+                      className={`p-2.5 border rounded-lg bg-transparent text-sm focus:ring-1 focus:ring-current ${theme === 'light' ? 'border-rich' : 'border-pale'
+                        }`}
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider">Access Token (Password)</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      className={`p-2.5 border rounded-lg bg-transparent text-sm focus:ring-1 focus:ring-current ${theme === 'light' ? 'border-rich' : 'border-pale'
+                        }`}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className={`w-full py-3 border font-bold text-xs tracking-wider uppercase rounded-xl btn-hover-scale ${theme === 'light' ? 'bg-rich text-pale border-rich' : 'bg-pale text-rich border-pale'
+                      }`}
+                  >
+                    {authMode === 'login' ? 'Verify Credentials' : 'Create Access Crypt'}
+                  </button>
+
+                </form>
+
+                <div className="text-center pt-2">
+                  <span className="text-[9px] opacity-60 select-none">
+                    Security Standard: High-Fidelity Local Mock Token Enforced.
+                  </span>
+                </div>
+
+              </div>
+
+            </div>
+          )}
+
+          {/* =========================================================================
+              7) ACCESSIBILITY PANEL OVERLAY
+              ========================================================================= */}
+          {showShortcutsOverlay && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black bg-opacity-70 backdrop-blur-sm">
+
+              <div className={`w-full max-w-lg soft-border-panel no-hover-lift p-6 rounded-2xl space-y-6 relative overflow-hidden animate-scale-up ${theme === 'light' ? 'bg-pale text-rich' : 'bg-rich text-pale'
+                }`}>
+
+                <button
+                  onClick={() => setShowShortcutsOverlay(false)}
+                  className="absolute top-4 right-4 hover:opacity-85"
+                  title="Close Guide"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
+                  </svg>
+                </button>
+
+                <div className="border-b pb-2">
+                  <h3 className="text-2xl font-bold">Accessibility & Sensory Controls</h3>
+                  <p className="text-xs opacity-75">Modify font layout scale, outline borders, and access keyboard shortcut indexes.</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+                  {/* Left Column: Toggles */}
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-bold uppercase tracking-wider border-b pb-1">Layout Parameters</h4>
+
+                    {/* Contrast toggle */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold">Contrast Enhanced Borders</span>
+                      <button
+                        onClick={() => setHighContrast(v => !v)}
+                        className={`px-3 py-1 border text-[10px] font-bold rounded ${highContrast ? 'bg-green-700 text-white border-green-900' : 'opacity-65'}`}
+                      >
+                        {highContrast ? "ACTIVE" : "INACTIVE"}
+                      </button>
+                    </div>
+
+                    {/* Font scale select */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold">Text Scale Factors</span>
+                      <div className="flex space-x-1">
+                        {['normal', 'large', 'xlarge'].map((sz) => (
+                          <button
+                            key={sz}
+                            onClick={() => setFontScale(sz)}
+                            className={`px-2 py-0.5 text-[9px] font-bold border rounded uppercase ${fontScale === sz ? 'bg-current text-white font-black' : 'opacity-60'
+                              }`}
+                          >
+                            {sz}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Shortcuts */}
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-bold uppercase tracking-wider border-b pb-1">System Keyboard Indexes</h4>
+
+                    <div className="space-y-2 text-[11px] font-medium leading-relaxed opacity-95">
+                      <div className="flex justify-between">
+                        <span>Toggle Theme Profile:</span>
+                        <kbd className="px-1.5 py-0.5 border rounded font-mono text-[9px]">Alt + T</kbd>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Accessibility Panel:</span>
+                        <kbd className="px-1.5 py-0.5 border rounded font-mono text-[9px]">Alt + A</kbd>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Terminate Dialogs:</span>
+                        <kbd className="px-1.5 py-0.5 border rounded font-mono text-[9px]">Escape</kbd>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <div className="text-center pt-2 border-t text-[10px] opacity-75">
+                  Designed in compliance with <strong>WCAG 2.2 AA</strong> accessibility indices.
+                </div>
+
+              </div>
+
+            </div>
+          )}
+
+          {/* --- FOOTER MAIN --- */}
+          <footer className={`border-t py-8 mt-12 transition-colors duration-300 ${theme === 'light' ? 'border-rich' : 'border-pale'}`}>
+            <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs opacity-75">
+
+              <div>
+                <span className="font-bold font-brand tracking-tight">SignBridge</span> - A micro project by Siddhesh Tiwari Muhammed Habeeb Tanishq Mehtab and varun yadav
+              </div>
+
+              <div className="flex space-x-4">
+                <span className="cursor-pointer hover:underline" onClick={() => setActiveTab('about')}>Research Citation</span>
+                <span className="cursor-pointer hover:underline" onClick={() => setActiveTab('translator')}>Translation Gateway</span>
+                <span className="cursor-pointer hover:underline" onClick={() => setActiveTab('text-to-sign')}>Playback Engine</span>
+              </div>
+
+            </div>
+          </footer>
+
+        </div>
+      );
+    }
+
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(<App />);
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+
+# Large model and data files
+*.pkl
+*.npz
+*.task
+
+# Datasets
+DATA/
+
+# Logs
+Dcoument and start files/*.txt
+!Dcoument and start files/CITATION FOR INCLUDE.txt
+
+# IDE / Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,6 @@
+f you use this dataset, please cite the following work:
+
+@inproceedings{sridhar_include:_2020, address = {New York, NY, USA}, series = {{MM} '20}, title = {{INCLUDE}: {A} {Large} {Scale} {Dataset} for {Indian} {Sign} {Language} {Recognition}}, isbn = {9781450379885}, shorttitle = {{INCLUDE}}, url = {https://doi.org/10.1145/3394171.3413528}, doi = {10.1145/3394171.3413528}, urldate = {2024-07-16}, booktitle = {Proceedings of the 28th {ACM} {International} {Conference} on {Multimedia}}, publisher = {Association for Computing Machinery}, author = {Sridhar, Advaith and Ganesan, Rohith Gandhi and Kumar, Pratyush and Khapra, Mitesh}, month = oct, year = {2020}, pages = {1366--1375}, }
+
+Contributions
+Thanks to @Rohith, @Gokul and @Advaith for adding this dataset. For any further questions, please reach out to advaithsridhar08@gmail.com
