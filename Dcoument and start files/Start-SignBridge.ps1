@@ -10,13 +10,28 @@ function Write-Step([string]$message) {
 
 Set-Location -Path $PSScriptRoot
 
-if (-not (Test-Path -LiteralPath "app.py")) {
-    if (Test-Path -LiteralPath "..\app.py") {
-        Set-Location -Path ".."
-    } else {
-        throw "app.py not found in $PSScriptRoot or parent directory"
+$candidateDirs = @(
+    $PSScriptRoot,
+    (Join-Path $PSScriptRoot "..\CODE FILES"),
+    (Join-Path $PSScriptRoot "CODE FILES"),
+    (Join-Path $PSScriptRoot "..")
+)
+
+$appDir = $null
+foreach ($dir in $candidateDirs) {
+    $resolved = Resolve-Path -LiteralPath $dir -ErrorAction SilentlyContinue
+    if ($resolved -and (Test-Path -LiteralPath (Join-Path $resolved.Path "app.py"))) {
+        $appDir = $resolved.Path
+        break
     }
 }
+
+if (-not $appDir) {
+    throw "app.py not found in $PSScriptRoot, ..\CODE FILES, or parent directory."
+}
+
+Set-Location -Path $appDir
+Write-Step "Working directory set to: $appDir"
 
 Write-Step "Checking Python availability"
 $pythonExe = $null
@@ -30,22 +45,22 @@ if (Get-Command python -ErrorAction SilentlyContinue) {
     throw "Python is not installed or not available in PATH."
 }
 
-Write-Step "Verifying required packages"
+Write-Step "Verifying required runtime packages (flask, joblib, numpy, scikit-learn)"
 $checkCode = @"
 import importlib.util
 import sys
-mods = ['flask','cv2','mediapipe','joblib','numpy']
-missing = [m for m in mods if importlib.util.find_spec(m) is None]
+mods = {'flask': 'flask', 'joblib': 'joblib', 'numpy': 'numpy', 'sklearn': 'scikit-learn'}
+missing = [pkg for mod, pkg in mods.items() if importlib.util.find_spec(mod) is None]
 if missing:
-    print('MISSING:' + ','.join(missing))
+    print('MISSING:' + ' '.join(missing))
     sys.exit(1)
 print('OK')
 "@
 
-$null = & $pythonExe @pythonPrefixArgs -c $checkCode
+$checkOutput = & $pythonExe @pythonPrefixArgs -c $checkCode
 if ($LASTEXITCODE -ne 0) {
-    Write-Step "Installing missing packages"
-    & $pythonExe @pythonPrefixArgs -m pip install flask opencv-python mediapipe joblib numpy
+    Write-Step "Installing missing runtime packages..."
+    & $pythonExe @pythonPrefixArgs -m pip install flask joblib numpy scikit-learn
     if ($LASTEXITCODE -ne 0) {
         throw "Package installation failed."
     }
@@ -68,7 +83,7 @@ if ($portConnections) {
     }
 }
 
-Write-Step "Launching browser in the background..."
+Write-Step "Launching browser in the background (http://127.0.0.1:$Port)..."
 $ScriptBlock = {
     param($Port)
     $maxWait = 30
@@ -92,4 +107,3 @@ $null = Start-Job -ScriptBlock $ScriptBlock -ArgumentList $Port
 
 Write-Step "Starting Flask backend server..."
 & $pythonExe @pythonPrefixArgs "app.py"
-

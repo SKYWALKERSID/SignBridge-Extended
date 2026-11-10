@@ -1,189 +1,71 @@
-# SignBridge Architecture
+# SignBridge Extended — System Architecture
 
-## 1) Purpose
+## 1. Overview
 
-This document defines the architecture for **SignBridge** with two lenses:
-- **Current Implementation (as-built in this workspace)**
-- **Future Scope (deployment-ready target architecture)**
+**SignBridge Extended** is a real-time Indian Sign Language (ISL) bidirectional translation platform supporting:
+- **Live Sign-to-Text & Voice (TTS):** Dual-hand 3D skeletal tracking in the browser via MediaPipe Hands, paired with a Flask inference backend supporting a 3-tier classification hierarchy (PyTorch Bidirectional LSTM with Attention -> Scikit-Learn Random Forest -> 3D Geometric Pose Classifier).
+- **Text & Speech-to-Sign Animation (STT):** Bilingual English and Hindi (Devanagari) tokenization with a damped spring-physics 2.5D/3D procedural hand avatar and character-by-character fingerspelling fallback.
 
-## 2) Current Implementation (As-Built)
+---
 
-## 2.1 Codebase Snapshot
+## 2. Repository Structure
 
-Current files in workspace:
-- `app.py` -> combined frontend + backend web app
-- `sign_model.pkl` -> trained classifier artifact
-- `collect-data.py` -> data capture script
-- `model.py` -> legacy local webcam inference script
-- `sign-detection.py` -> scratch/partial detection script
-- `PRD.md`, `TRD.md` -> product and technical requirement docs
-- `Start-SignBridge.ps1`, `Start-SignBridge.bat` -> launcher scripts
+```text
+SignBridge-Extended/
+├── CODE FILES/
+│   ├── app.py                 # Flask API server & 3-tier inference engine (BiLSTM / RF / Geometric)
+│   ├── index.html             # Single-file React 18 + Tailwind CSS frontend application
+│   ├── model_classes.json     # 251 ISL class labels (0-9, A-Z, words, and ISL-CSLRT sentences)
+│   ├── train.py               # Full dataset landmark extraction & Random Forest (300 trees) trainer
+│   └── train_rf.py            # Fast Random Forest hyperparameter sweep trainer (from cached .npz)
+├── Dcoument and start files/
+│   ├── Start-SignBridge.bat   # Windows one-click batch launcher
+│   ├── Start-SignBridge.ps1   # PowerShell environment check, port cleanup & server starter
+│   └── CITATION FOR INCLUDE.txt # Citation for the INCLUDE dataset
+├── MD FILES/
+│   └── ARCHITECTURE.md        # System architecture documentation
+├── requirements.txt           # Python runtime & training dependencies
+└── README.md                  # Project documentation and setup guide
+```
 
-## 2.2 Runtime Architecture (Current)
+---
 
-### Backend
-- Framework: **Flask** (single service)
-- Model serving: `joblib.load("sign_model.pkl")`
-- Inference endpoint:
-  - `POST /api/v1/infer/landmarks`
-  - Input: 63 landmark float values (1 hand, x/y/z for 21 points)
-  - Output: prediction, confidence, smoothed prediction, commit signal
-- Text-to-sign endpoint:
-  - `POST /api/v1/text-to-sign`
-  - Token mapping for English/Hindi phrases to animation ids
-- Health endpoint:
-  - `GET /api/v1/health`
+## 3. Runtime Pipeline
 
-### Frontend
-- Delivered by Flask as inline HTML/CSS/JS from `/`
-- Browser webcam access via `getUserMedia`
-- Browser-side MediaPipe Hands extracts landmarks
-- Frontend sends landmarks to backend inference API in intervals
-- Text-to-sign playback uses paper-style subtle UI animation states
+### 3.1 Sign-to-Text Pipeline
+1. **Browser Capture (`index.html`):**
+   - `navigator.mediaDevices.getUserMedia` streams 640x480 webcam frames.
+   - `@mediapipe/hands` extracts 21 3D joints (`[x, y, z]` -> 63 floats) for up to 2 hands (`H1` and `H2`) in real time.
+2. **Spatial Normalization (`normalize_landmarks` in `app.py`):**
+   - Translates all 21 joints relative to the wrist origin (`points[0]`) for translation invariance.
+   - Divides coordinates by the Euclidean distance between the wrist (`points[0]`) and middle finger MCP knuckle (`points[9]`) for scale/distance invariance.
+   - Clips outliers to `[-3.0, 3.0]`.
+3. **3-Tier Classification Engine (`app.py`):**
+   - **Tier 1 — Bidirectional LSTM (`SignLanguageLSTM`):** Used when `sign_model_lstm.pt`, `scaler_lstm.pkl`, and `model_classes_lstm.json` are present. Buffers up to 30 frames per session and applies attention pooling over a 2-layer BiLSTM (`hidden_size=256`).
+   - **Tier 2 — Random Forest Classifier:** Used when `sign_model.pkl` and `scaler.pkl` are present. Scales the 63-d normalized vector via `StandardScaler` and predicts class probabilities across 251 ISL classes.
+   - **Tier 3 — Built-in 3D Geometric Pose Classifier (`classify_landmarks_geometric`):** Zero-dependency fallback when external `.pt`/`.pkl` model weights are absent. Evaluates 3D finger extension ratios, thumb-index pinch distances, and inter-finger spread to classify core ISL gestures (`hello`, `thanks`, `yes`, `no`, `iloveyou`, `you`, `GOOD`, `FINE`, numbers, and letters).
+4. **Temporal Smoothing & Commit Gating:**
+   - Maintains a per-session rolling window (`deque(maxlen=6)`).
+   - Emits `commit = True` when the mode prediction appears at least `4` times in the 6-frame window with confidence `>= 0.70`.
+   - Committed tokens are appended to the live transcript and spoken aloud via the browser's `speechSynthesis` API.
 
-### Session/State
-- In-memory session smoothing window (`deque`) per `session_id`
-- No persistent database in current build
+### 3.2 Text-to-Sign & Speech-to-Sign Pipeline
+1. **Input Capture:** Accepts typed text or live voice input via Web Speech Recognition (`SpeechRecognition` / `webkitSpeechRecognition`) in English (`en-US`) or Hindi (`hi-IN`).
+2. **Tokenization (`POST /api/v1/text-to-sign`):**
+   - Strips surrounding punctuation while preserving Latin and Devanagari characters.
+   - Maps known English and Hindi vocabulary to canonical gesture keys (`open-palm-wave`, `joined-palms-bow`, `chin-forward-thank`, `fist-nod`, `index-middle-tap`, `index-self`, `cross-arms-heart`, `point-forward`) and identifies unmapped words as `fallback_tokens`.
+3. **Procedural Avatar Rendering (`drawVolumetricHand` & `getPoseCoordinates`):**
+   - Animates a 21-joint volumetric hand on HTML5 Canvas using damped spring physics (`k = 0.30`, `d = 0.52`).
+   - Unmapped tokens automatically fall back to sequential character-by-character fingerspelling poses.
 
-## 2.3 Current Visual/Theming Implementation
+---
 
-- Brand name: **SignBridge**
-- Visual System: **Pure Two-Color Dual-Inversion Style**
-  - Primary Pale Grey: `#EBEBDF`
-  - Accent Rich Blue: `#191265`
-- Light Mode: Background is Pale Grey (`#EBEBDF`), structures and text are Rich Blue (`#191265`).
-- Dark Mode: Background is Rich Blue (`#191265`), structures and text are Pale Grey (`#EBEBDF`).
-- UI style: extremely clean, Swiss-style minimalism, strictly NO neon elements, flashy glows, or third-party accents.
-- Theme Switcher: Seamless header-integrated dynamic toggle with smooth color-fade animations.
+## 4. REST API Endpoints (`app.py`)
 
-
-## 2.4 Current Constraints
-
-- Single-process app (`app.py`) is not horizontally scalable.
-- In-memory state is lost on restart.
-- No auth/account model.
-- No persistent transcript/history storage.
-- Limited vocabulary mapping and model classes.
-- Font loading currently depends on local/browser fallback unless external font files are integrated.
-
-## 3) Future Scope (Deployment-Ready Target)
-
-## 3.1 Target Logical Architecture
-
-### Client Layer
-- **Next.js (React + TypeScript)** web app
-- Modules:
-  - Live sign-to-text view
-  - Text-to-sign animation view
-  - Conversation split mode
-  - Settings and accessibility
-
-### API Layer
-- **FastAPI** service with versioned endpoints under `/api/v1`
-- Separate modules for inference, text mapping, health, and model management
-
-### ML Inference Layer
-- Model registry and active model loader
-- Preprocessing + confidence thresholding + temporal smoothing
-- Future optional GPU inference path
-
-### Data Layer
-- **PostgreSQL** for persistent product data
-- **Redis** for cache/session/ratelimiting/realtime glue
-- Object storage (S3-compatible) for model/animation assets
-
-### Edge/Delivery Layer
-- Nginx/Caddy reverse proxy
-- TLS termination, compression, static caching
-- CDN for static assets/animations
-
-## 3.2 Target Deployment Topology
-
-- `frontend` container
-- `backend` container
-- `postgres` container/service
-- `redis` container/service
-- optional worker container for async jobs
-
-Orchestrated by Docker Compose (small scale) or Kubernetes (large scale).
-
-## 3.3 Data Model (Future)
-
-Core tables:
-- `users` (optional in MVP, required for personalized settings)
-- `sign_classes`
-- `animation_assets`
-- `phrase_mappings`
-- `model_versions`
-- `inference_events` (anonymized analytics)
-
-## 3.4 API Expansion (Future)
-
-- `POST /api/v1/infer/frame` (image/frame path)
-- `POST /api/v1/infer/landmarks` (current compatible)
-- `POST /api/v1/text-to-sign`
-- `GET /api/v1/animations/{id}`
-- `GET /api/v1/models/active`
-- `POST /api/v1/models/switch` (admin)
-
-## 3.5 Security/Compliance Scope
-
-- HTTPS-only in production
-- Strict CORS and origin policy
-- Input schema validation + request size limits
-- Rate limiting and abuse protection
-- Consent-first webcam workflow
-- No raw video retention by default
-
-## 3.6 Observability Scope
-
-- Structured logs
-- Error tracking (Sentry)
-- Metrics: latency, inference success, confidence distribution, uptime
-- Health checks and startup readiness probes
-
-## 4) Migration Path (Current -> Target)
-
-## Phase A: Stabilize Current MVP
-- Keep Flask app functional
-- Improve model quality and token coverage
-- Add basic integration tests
-
-## Phase B: Split Frontend and Backend
-- Move UI from inline HTML to Next.js app
-- Move APIs from Flask routes into FastAPI service
-- Keep `sign_model.pkl` contract stable during migration
-
-## Phase C: Add Persistence + Scale
-- Introduce PostgreSQL and Redis
-- Add user/session persistence and mapping CRUD
-- Add deploy pipeline and environment separation
-
-## Phase D: Production Hardening
-- Add auth (if required)
-- Add CDN and optimized animation delivery
-- Add monitoring, SLOs, automated rollback strategy
-
-## 5) Current vs Future Summary
-
-### Current
-- Monolithic Flask app
-- Browser MediaPipe + backend prediction
-- No DB, no auth, no persistent storage
-- Fast local setup and demo-ready
-
-### Future
-- Next.js + FastAPI microservice-style split
-- PostgreSQL + Redis + object storage
-- CI/CD, observability, scalable deployment
-- Enterprise-grade reliability and extensibility
-
-## 6) Decision Note: Database Requirement
-
-For **current local MVP usage**, database is not mandatory.
-
-For **deployment-ready production**, database is strongly recommended (and typically required) for:
-- mappings/versioning
-- operational analytics
-- administration workflows
-- scalability and maintainability
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/` | Serves the main `index.html` React application |
+| `GET` | `/api/v1/health` | Returns server status, active inference engine (`lstm`, `random_forest`, or `geometric_fallback`), and class count |
+| `GET` | `/api/v1/classes` | Returns the active list of ISL classes and total count |
+| `POST` | `/api/v1/infer/landmarks` | Accepts `{ "landmarks": [63 floats], "session_id": "..." }` and returns `prediction`, `confidence`, `top_k`, `smoothed_prediction`, and `commit` |
+| `POST` | `/api/v1/text-to-sign` | Accepts `{ "text": "...", "language": "en" \| "hi" }` and returns normalized tokens, mapped gesture sequence, and fallback tokens |
