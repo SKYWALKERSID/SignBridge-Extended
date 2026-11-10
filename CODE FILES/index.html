@@ -3805,43 +3805,14 @@
                   </div>
                 </section>
 
-                {/* Team & Research Details */}
+                {/* Open Source & License Details */}
                 <section className="space-y-4">
-                  <h3 className="text-2xl font-bold border-b pb-2">Academic Research Team</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-
-                    <div className="p-4 border rounded-xl space-y-2 flex flex-col justify-between">
-                      <div>
-                        <h4 className="font-bold text-base">Siddhesh Tiwari</h4>
-                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-65 block mb-1">Ideation & Web Development and Integration</span>
-                        <p className="text-xs opacity-80 leading-relaxed">Focuses on front-end design system architecture, state flow engineering, and integration of MediaPipe pipeline.</p>
-                      </div>
-                    </div>
-
-                    <div className="p-4 border rounded-xl space-y-2 flex flex-col justify-between">
-                      <div>
-                        <h4 className="font-bold text-base">Muhammed Habeeb</h4>
-                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-65 block mb-1">Core Code Development & Dataset Curation</span>
-                        <p className="text-xs opacity-80 leading-relaxed">Directs hand landmark feature engineering, classification matrix training, and curated gesture datasets.</p>
-                      </div>
-                    </div>
-
-                    <div className="p-4 border rounded-xl space-y-2 flex flex-col justify-between">
-                      <div>
-                        <h4 className="font-bold text-base">Tanishq Mehtab</h4>
-                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-65 block mb-1">Web Testing & Debugging</span>
-                        <p className="text-xs opacity-80 leading-relaxed">Oversees cross-browser layout performance audits, accessibility indexes, and end-to-end user tests.</p>
-                      </div>
-                    </div>
-
-                    <div className="p-4 border rounded-xl space-y-2 flex flex-col justify-between">
-                      <div>
-                        <h4 className="font-bold text-base">Varun Yadav</h4>
-                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-65 block mb-1">Documentation, Thesis Writing & Log Changes</span>
-                        <p className="text-xs opacity-80 leading-relaxed">Manages the comprehensive system boundaries reporting, architectural timeline, and project change log.</p>
-                      </div>
-                    </div>
-
+                  <h3 className="text-2xl font-bold border-b pb-2">Open-Source License & Standards</h3>
+                  <div className="p-6 border rounded-xl space-y-2">
+                    <h4 className="font-bold text-base">MIT License</h4>
+                    <p className="text-xs opacity-80 leading-relaxed">
+                      SignBridge Extended is open-source software licensed under the MIT License. All hand landmark tracking and inference run locally with zero external cloud dependencies.
+                    </p>
                   </div>
                 </section>
 
@@ -3945,11 +3916,11 @@
             <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs opacity-75">
 
               <div>
-                <span className="font-bold font-brand tracking-tight">SignBridge</span> - A micro project by Siddhesh Tiwari Muhammed Habeeb Tanishq Mehtab and varun yadav
+                <span className="font-bold font-brand tracking-tight">SignBridge Extended</span> — Released under the MIT License
               </div>
 
               <div className="flex space-x-4">
-                <span className="cursor-pointer hover:underline" onClick={() => setActiveTab('about')}>Research Citation</span>
+                <span className="cursor-pointer hover:underline" onClick={() => setActiveTab('about')}>System Architecture</span>
                 <span className="cursor-pointer hover:underline" onClick={() => setActiveTab('translator')}>Translation Gateway</span>
                 <span className="cursor-pointer hover:underline" onClick={() => setActiveTab('text-to-sign')}>Playback Engine</span>
               </div>

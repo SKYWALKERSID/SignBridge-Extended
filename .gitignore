@@ -17,7 +17,6 @@ DATA/
 
 # Logs
 Document and start files/*.txt
-!Document and start files/CITATION FOR INCLUDE.txt
 
 # IDE / Editors
 .vscode/

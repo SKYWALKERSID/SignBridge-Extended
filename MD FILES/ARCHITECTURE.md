@@ -21,10 +21,10 @@ SignBridge-Extended/
 │   └── train_lstm.py          # PyTorch Bidirectional LSTM + Attention trainer
 ├── Document and start files/
 │   ├── Start-SignBridge.bat   # Windows one-click batch launcher
-│   ├── Start-SignBridge.ps1   # PowerShell environment check, port cleanup & server starter
-│   └── CITATION FOR INCLUDE.txt # Citation for the INCLUDE dataset
+│   └── Start-SignBridge.ps1   # PowerShell environment check, port cleanup & server starter
 ├── MD FILES/
 │   └── ARCHITECTURE.md        # System architecture documentation
+├── LICENSE                    # MIT License
 ├── requirements.txt           # Python runtime & training dependencies
 └── README.md                  # Project documentation and setup guide
 ```
@@ -61,12 +61,6 @@ SignBridge-Extended/
 
 ---
 
-## 4. REST API Endpoints (`app.py`)
+## 4. License
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/` | Serves the main `index.html` React application |
-| `GET` | `/api/v1/health` | Returns server status, active inference engine (`lstm`, `random_forest`, or `geometric_fallback`), and class count |
-| `GET` | `/api/v1/classes` | Returns the active list of ISL classes and total count |
-| `POST` | `/api/v1/infer/landmarks` | Accepts `{ "landmarks": [63 floats], "session_id": "..." }` and returns `prediction`, `confidence`, `top_k`, `smoothed_prediction`, and `commit` |
-| `POST` | `/api/v1/text-to-sign` | Accepts `{ "text": "...", "language": "en" \| "hi" }` and returns normalized tokens, mapped gesture sequence, and fallback tokens |
+SignBridge Extended is released under the [MIT License](../LICENSE).
