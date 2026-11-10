@@ -27,7 +27,6 @@ from collections import Counter
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
-import cv2
 import joblib
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
@@ -35,46 +34,59 @@ from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-from mediapipe.tasks.python import BaseOptions
-from mediapipe.tasks.python.vision import (
-    HandLandmarker,
-    HandLandmarkerOptions,
-    RunningMode,
-)
-
 # ============================================================
 # Configuration
 # ============================================================
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)  # Micro Project Extended
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 DATA_ROOT = os.path.join(PROJECT_ROOT, "DATA")
-CORPUS_ROOT = os.path.join(DATA_ROOT, "ISL_CSLRT_Corpus", "ISL_CSLRT_Corpus")
+_NESTED_CORPUS = os.path.join(DATA_ROOT, "ISL_CSLRT_Corpus", "ISL_CSLRT_Corpus")
+CORPUS_ROOT = (
+    _NESTED_CORPUS
+    if os.path.isdir(_NESTED_CORPUS)
+    else os.path.join(DATA_ROOT, "ISL_CSLRT_Corpus")
+)
 HAND_MODEL_PATH = os.path.join(SCRIPT_DIR, "hand_landmarker.task")
 MODEL_OUTPUT = os.path.join(SCRIPT_DIR, "sign_model.pkl")
 SCALER_OUTPUT = os.path.join(SCRIPT_DIR, "scaler.pkl")
 CLASSES_OUTPUT = os.path.join(SCRIPT_DIR, "model_classes.json")
 CACHE_FILE = os.path.join(SCRIPT_DIR, "landmarks_cache.npz")
+CLEAN_CACHE_FILE = os.path.join(SCRIPT_DIR, "landmarks_clean.npz")
 TEST_SIZE = 0.20
 RANDOM_STATE = 42
 
 # Video frame extraction sampling every Nth frame
 VIDEO_FRAME_SAMPLE_INTERVAL = 3
 
-# ============================================================
-# MediaPipe HandLandmarker
-# ============================================================
-if not os.path.exists(HAND_MODEL_PATH):
-    print(f"[ERROR] Hand landmarker model not found: {HAND_MODEL_PATH}")
-    sys.exit(1)
+landmarker = None
 
-options = HandLandmarkerOptions(
-    base_options=BaseOptions(model_asset_path=HAND_MODEL_PATH),
-    running_mode=RunningMode.IMAGE,
-    num_hands=2,
-    min_hand_detection_confidence=0.4,
-    min_hand_presence_confidence=0.4,
-)
-landmarker = HandLandmarker.create_from_options(options)
+
+def get_landmarker():
+    """Lazily initialize MediaPipe HandLandmarker only when raw media extraction is needed."""
+    global landmarker
+    if landmarker is not None:
+        return landmarker
+
+    if not os.path.exists(HAND_MODEL_PATH):
+        print(f"[ERROR] Hand landmarker model not found: {HAND_MODEL_PATH}")
+        sys.exit(1)
+
+    from mediapipe.tasks.python import BaseOptions
+    from mediapipe.tasks.python.vision import (
+        HandLandmarker,
+        HandLandmarkerOptions,
+        RunningMode,
+    )
+
+    options = HandLandmarkerOptions(
+        base_options=BaseOptions(model_asset_path=HAND_MODEL_PATH),
+        running_mode=RunningMode.IMAGE,
+        num_hands=2,
+        min_hand_detection_confidence=0.4,
+        min_hand_presence_confidence=0.4,
+    )
+    landmarker = HandLandmarker.create_from_options(options)
+    return landmarker
 
 
 # ============================================================
@@ -95,13 +107,15 @@ def normalize_landmarks(landmarks):
 
 def extract_landmarks_from_image(image_path):
     """Extract normalized 63-d hand landmarks from an image file."""
+    import cv2
+    import mediapipe as mp
+
     img = cv2.imread(image_path)
     if img is None:
         return None
     rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    import mediapipe as mp
     mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
-    result = landmarker.detect(mp_image)
+    result = get_landmarker().detect(mp_image)
     if not result.hand_landmarks:
         return None
     hand = result.hand_landmarks[0]
@@ -157,9 +171,10 @@ except ImportError:
 # ============================================================
 # Check for existing cache
 # ============================================================
-if os.path.exists(CACHE_FILE):
-    print(f"\n[Cache] Loading existing landmark cache: {CACHE_FILE}")
-    cache = np.load(CACHE_FILE, allow_pickle=True)
+active_cache = CLEAN_CACHE_FILE if os.path.exists(CLEAN_CACHE_FILE) else (CACHE_FILE if os.path.exists(CACHE_FILE) else None)
+if active_cache:
+    print(f"\n[Cache] Loading existing landmark cache: {active_cache}")
+    cache = np.load(active_cache, allow_pickle=True)
     X = cache["X"]
     y = cache["y"]
     print(f"[Cache] Loaded {len(X):,} samples across {len(np.unique(y))} classes")
@@ -296,6 +311,9 @@ else:
         total_vid_lm = 0
 
         for vid_idx, (cls_name, vid_path) in enumerate(video_files, 1):
+            import cv2
+            import mediapipe as mp
+
             cap = cv2.VideoCapture(vid_path)
             frame_idx = 0
             while cap.isOpened():
@@ -306,10 +324,9 @@ else:
                 if frame_idx % VIDEO_FRAME_SAMPLE_INTERVAL != 0:
                     continue
                 total_frames += 1
-                import mediapipe as mp
                 rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
-                result = landmarker.detect(mp_image)
+                result = get_landmarker().detect(mp_image)
                 if result.hand_landmarks:
                     hand = result.hand_landmarks[0]
                     raw = [c for lm in hand for c in (lm.x, lm.y, lm.z)]
@@ -331,6 +348,10 @@ else:
         print(f"  Landmarks extracted from videos: {total_vid_lm:,}")
 
     # Convert to arrays
+    if not X_list:
+        print(f"\n[ERROR] No training samples found in {DATA_ROOT} and no landmark cache exists.")
+        sys.exit(1)
+
     X = np.array(X_list, dtype=np.float32)
     y = np.array(y_list)
 
