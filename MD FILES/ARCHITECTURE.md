@@ -17,8 +17,9 @@ SignBridge-Extended/
 │   ├── index.html             # Single-file React 18 + Tailwind CSS frontend application
 │   ├── model_classes.json     # 251 ISL class labels (0-9, A-Z, words, and ISL-CSLRT sentences)
 │   ├── train.py               # Full dataset landmark extraction & Random Forest (300 trees) trainer
-│   └── train_rf.py            # Fast Random Forest hyperparameter sweep trainer (from cached .npz)
-├── Dcoument and start files/
+│   ├── train_rf.py            # Fast Random Forest hyperparameter sweep trainer (from cached .npz)
+│   └── train_lstm.py          # PyTorch Bidirectional LSTM + Attention trainer
+├── Document and start files/
 │   ├── Start-SignBridge.bat   # Windows one-click batch launcher
 │   ├── Start-SignBridge.ps1   # PowerShell environment check, port cleanup & server starter
 │   └── CITATION FOR INCLUDE.txt # Citation for the INCLUDE dataset

@@ -16,8 +16,8 @@ ENV/
 DATA/
 
 # Logs
-Dcoument and start files/*.txt
-!Dcoument and start files/CITATION FOR INCLUDE.txt
+Document and start files/*.txt
+!Document and start files/CITATION FOR INCLUDE.txt
 
 # IDE / Editors
 .vscode/

@@ -34,8 +34,9 @@ SignBridge-Extended/
 │   ├── index.html             # React 18 + Tailwind CSS single-page frontend
 │   ├── model_classes.json     # 251 ISL class definitions (0-9, A-Z, words, sentences)
 │   ├── train.py               # Full dataset landmark extractor & 300-tree RF trainer
-│   └── train_rf.py            # Random Forest hyperparameter sweep script
-├── Dcoument and start files/
+│   ├── train_rf.py            # Random Forest hyperparameter sweep script
+│   └── train_lstm.py          # PyTorch Bidirectional LSTM + Attention trainer
+├── Document and start files/
 │   ├── Start-SignBridge.bat   # One-click Windows batch launcher
 │   ├── Start-SignBridge.ps1   # PowerShell setup & server launcher script
 │   └── CITATION FOR INCLUDE.txt # INCLUDE dataset citation
@@ -50,9 +51,9 @@ SignBridge-Extended/
 ## Quick Start
 
 ### Option 1: One-Click Windows Launcher
-Double-click [`Dcoument and start files/Start-SignBridge.bat`](Dcoument%20and%20start%20files/Start-SignBridge.bat) or run via PowerShell:
+Double-click [`Document and start files/Start-SignBridge.bat`](Document%20and%20start%20files/Start-SignBridge.bat) or run via PowerShell:
 ```powershell
-powershell -ExecutionPolicy Bypass -File ".\Dcoument and start files\Start-SignBridge.ps1"
+powershell -ExecutionPolicy Bypass -File ".\Document and start files\Start-SignBridge.ps1"
 ```
 The launcher verifies required Python packages, frees port `8000` if busy, starts the Flask backend in `CODE FILES/`, and opens `http://127.0.0.1:8000` in your browser.
 
@@ -86,6 +87,11 @@ python "CODE FILES/train.py"
 If you already have extracted landmark caches (`landmarks_clean.npz` or `landmarks_cache.npz` inside `CODE FILES/`):
 ```bash
 python "CODE FILES/train_rf.py"
+```
+To train the PyTorch Bidirectional LSTM with Attention (`sign_model_lstm.pt`, `scaler_lstm.pkl`, and `model_classes_lstm.json`):
+```bash
+pip install torch
+python "CODE FILES/train_lstm.py"
 ```
 
 ---
